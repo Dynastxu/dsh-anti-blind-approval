@@ -1,6 +1,8 @@
-# dsh-ai-approval-review
+# 反盲批 (Anti Blind Approval)
 
 > DeepSeek Harness 插件：会话处于「工作区内修改」（workspace-write）时，把提权申请同时交给模型审核，只返回 `{safe, reason}`；审核期间「允许」按钮显示加载环且不可点，判为不安全时再锁定 N 秒（默认 3 秒）。**最终决定权仍在人，不会自动放行。**
+
+> 界面显示名：**反盲批 / Anti Blind Approval**。包标识仍为 `dsh-ai-approval-review`，安装、卸载和命令里用这个包名。
 
 ```
 审批卡出现
@@ -15,7 +17,7 @@
 
 ## 设置
 
-**设置 → AI 审批审核**（独立设置页，不依赖 DSH 的插件配置表单）：
+**设置 → 反盲批**（独立设置页，不依赖 DSH 的插件配置表单）：
 
 | 设置项 | 默认 | 说明 |
 |---|---|---|
@@ -62,7 +64,7 @@ lib/index.js    宿主半（ESM，无第三方依赖）
   └─ POST /api/ai-approval-review/test      合成样例的连通性测试
 lib/client.js   浏览器半（模块加载器格式，仅依赖 react / ui-primitives）
   ├─ conversation.composer  priority 0 接管审批面板（原生面板是 priority 1）
-  └─ settings.section      「AI 审批审核」设置页
+  └─ settings.section      「反盲批」设置页
 ```
 
 宿主路由通过 `ctx.connection.fetch.register()` 注册，走 DSH 已有的 `/api` 认证与 Host/Origin 防护，不另开端口。

@@ -99,7 +99,7 @@ if (settings.opts.id !== 'ai-approval-review') throw new Error('settings id wron
 globalThis.__resetHooks()
 const settingsTree = settings.component({ t: fakeT })
 const settingsFlat = JSON.stringify(settingsTree)
-for (const needle of ['AI 审批审核', '审核模型', '审核提示词', '测试审核']) {
+for (const needle of ['反盲批', '审核模型', '审核提示词', '测试审核']) {
   if (!settingsFlat.includes(needle)) throw new Error('settings missing ' + needle)
 }
 console.log('settings render ok')

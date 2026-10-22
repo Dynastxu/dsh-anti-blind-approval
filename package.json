@@ -2,7 +2,7 @@
   "name": "dsh-ai-approval-review",
   "version": "0.1.0",
   "private": true,
-  "description": "DeepSeek Harness approval guard: review workspace-write escalation requests with the session model, then gate the Allow button on a strict JSON verdict.",
+  "description": "反盲批 / Anti Blind Approval — DeepSeek Harness approval guard: review workspace-write escalation requests with the session model, then gate the Allow button on a strict JSON verdict.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
