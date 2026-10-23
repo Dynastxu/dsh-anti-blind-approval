@@ -60,17 +60,38 @@ assert(routes.has('/api/ai-approval-review/test'), 'test route registered')
 const catalog = await routes.get('/api/ai-approval-review/catalog').fetch(new Request('http://x/api/ai-approval-review/catalog'))
 const cat = await catalog.json()
 assert(typeof cat.defaultPrompt === 'string' && cat.defaultPrompt.includes('JSON') === false, 'catalog default prompt')
+assert(cat.defaultPrompt.startsWith('You are the approval safety reviewer'), 'default prompt is English')
+assert(cat.defaultPrompt.includes('{language}'), 'default prompt carries the language placeholder')
+assert(!/[\u4e00-\u9fff]/u.test(cat.defaultPrompt), 'default prompt carries no Chinese prose')
 assert(cat.providers[0].models[0].id === 'fake-1', 'catalog models')
 
 const action = await call('/api/ai-approval-review/action', { sessionId: 's1', callId: 'c1', toolName: 'bash', reason: 'r' })
 assert(action.value.active === true, 'action active in workspace-write')
 assert(action.value.preview.includes('rm -rf /tmp/x'), 'action preview has command')
 
-const safe = await call('/api/ai-approval-review/review', { sessionId: 's1', callId: 'c1', toolName: 'bash', reason: 'r' })
+const safe = await call('/api/ai-approval-review/review', { sessionId: 's1', callId: 'c1', toolName: 'bash', reason: 'r', userLanguage: 'zh-CN' })
 assert(safe.value.safe === true && safe.value.reason === '常规项目操作', 'safe verdict parsed')
 assert(safe.value.model === 'fake/fake-1', 'review uses session model')
 assert(calls.at(-1).temperature === 0, 'temperature 0')
-assert(calls.at(-1).system.includes('JSON'), 'JSON contract appended')
+assert(calls.at(-1).system.includes('Chinese (zh-CN)'), 'placeholder resolves to the user language')
+assert(!calls.at(-1).system.includes('{language}'), 'no unresolved placeholder reaches the model')
+const sentFacts = calls.at(-1).messages[0].content[0].text
+assert(sentFacts.includes('"userLanguage": "zh-CN"'), 'review facts carry the user language')
+
+const noLanguage = await call('/api/ai-approval-review/review', { sessionId: 's1', callId: 'c1', toolName: 'bash', reason: 'r' })
+assert(noLanguage.value.safe === true, 'review without a language still runs')
+assert(calls.at(-1).system.includes('English'), 'missing language falls back to English')
+assert(!calls.at(-1).system.includes('{language}'), 'fallback still resolves the placeholder')
+
+const custom = await call('/api/ai-approval-review/review', { sessionId: 's1', callId: 'c1', toolName: 'bash', reason: 'r', prompt: 'Always answer in {language}.', userLanguage: 'zh' })
+assert(custom.value.safe === true, 'custom prompt review runs')
+assert(calls.at(-1).system.startsWith('Always answer in Chinese (zh).'), 'custom prompt placeholder is substituted')
+assert(calls.at(-1).system.split('{language}').length === 1, 'contract placeholder is substituted too')
+
+const junk = await call('/api/ai-approval-review/review', { sessionId: 's1', callId: 'c1', toolName: 'bash', reason: 'r', userLanguage: 'zh; rm -rf /' })
+assert(junk.value.safe === true, 'malformed language does not fail the review')
+assert(calls.at(-1).messages[0].content[0].text.includes('"userLanguage": ""'), 'malformed language is dropped')
+assert(calls.at(-1).system.includes('English'), 'malformed language falls back to English')
 
 globalThis.__NEXT_TEXT__ = '```json\n{"safe":false,"reason":"删除系统目录"}\n```'
 const unsafe = await call('/api/ai-approval-review/review', { sessionId: 's1', callId: 'c1', toolName: 'bash', reason: 'r' })
@@ -83,6 +104,9 @@ assert(bad.value.errorCode === 'INVALID_OUTPUT', 'invalid output rejected')
 globalThis.__NEXT_TEXT__ = '{"safe":true,"reason":"ok"}'
 const test = await call('/api/ai-approval-review/test', {})
 assert(test.value.ok === true, 'test route runs a review')
+const testAgain = await call('/api/ai-approval-review/test', { userLanguage: 'en' })
+assert(testAgain.value.ok === true, 'test route accepts a language')
+assert(calls.at(-1).messages[0].content[0].text.includes('"userLanguage": "en"'), 'test facts carry the user language')
 
 const huge = makeCtx('workspace-write', JSON.stringify({ path: 'big.txt', content: 'x'.repeat(200000) }))
 routes.clear()

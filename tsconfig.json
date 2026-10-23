@@ -1,0 +1,38 @@
+{
+  // Host face: the Node plugin entry, and the package's editor project. The
+  // browser half has its own face in tsconfig.client.json, anchored for
+  // editors by src/client/tsconfig.json.
+  //
+  // Type-only imports of installed DSH packages resolve to their published
+  // declarations (`lib/types`), which is what a real install provides; the
+  // compiler shape mirrors the repository's strict base without its
+  // source-plane path aliases.
+  "compilerOptions": {
+    "target": "es2024",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2024"],
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "paths": {
+      "@deepseek-ai/cordis": ["../vendor/cordis/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-brand": ["../packages/util/brand/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-session": ["../packages/core/session/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-session/types": ["../packages/core/session/lib/types/types.d.ts"],
+      "@deepseek-ai/dsh-llm": ["../packages/llm/llm/lib/types/index.d.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/client/**"]
+}

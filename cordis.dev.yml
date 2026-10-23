@@ -1,0 +1,14 @@
+# Development overlay for `pnpm dsh web --patch dsh-anti-blind-approval/cordis.dev.yml`.
+#
+# Unlike the package's cordis.patch.yml (which names the package so a *profile*
+# can resolve the installed bundle), a --patch overlay must name an absolute
+# path: this checkout is not a pnpm workspace member, so the bare package name
+# resolves nowhere. The path is machine-specific on purpose — it is a local dev
+# file, not part of the distributable package.
+#
+# The client half needs no row of its own: dsh-client-modules reads this
+# package's `dsh.client` declaration from the manifest nearest this module and
+# serves its built ./client export, so run the build before launching.
+- insert:
+    - id: ai-approval-review
+      name: 'C:/Users/dynas/Documents/Code/deepseek-harness/dsh-anti-blind-approval/lib/index.js'

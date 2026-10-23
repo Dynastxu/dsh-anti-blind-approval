@@ -1,0 +1,5 @@
+{
+  // Editor anchor for the browser half: the nearest tsconfig to these files is
+  // the client face, not the Host project at the package root.
+  "extends": "../../tsconfig.client.json"
+}

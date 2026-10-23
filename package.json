@@ -1,6 +1,6 @@
 {
   "name": "dsh-ai-approval-review",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "反盲批 / Anti Blind Approval — DeepSeek Harness approval guard: review workspace-write escalation requests with the session model, then gate the Allow button on a strict JSON verdict.",
   "type": "module",
@@ -18,6 +18,14 @@
   ],
   "engines": {
     "node": ">=22.19.0"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "prepare": "tsdown",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.client.json",
+    "build:repo": "node ../node_modules/tsdown/dist/run.mjs",
+    "typecheck:repo": "node ../node_modules/typescript/bin/tsc -p tsconfig.json && node ../node_modules/typescript/bin/tsc -p tsconfig.client.json",
+    "test": "node test/host.test.mjs && node test/client.test.mjs && node test/composition.test.mjs"
   },
   "keywords": [
     "deepseek-harness",
@@ -40,5 +48,9 @@
         "@deepseek-ai/dsh-client-ui-approval"
       ]
     }
+  },
+  "devDependencies": {
+    "tsdown": "^0.22.2",
+    "typescript": "^6.0.3"
   }
 }
