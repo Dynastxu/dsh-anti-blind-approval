@@ -19,7 +19,7 @@ import type {
 import { ROUTE_BASE } from '../contract.ts'
 import { getJson, postJson } from './http.ts'
 import { NS, errorKey } from './locales.ts'
-import { MAX_DELAY_SECONDS, type SettingsField, type SettingsHandle } from './settings.ts'
+import { MAX_DELAY_SECONDS, MIN_REVIEW_TIMEOUT_MS, MAX_REVIEW_TIMEOUT_MS, type SettingsField, type SettingsHandle } from './settings.ts'
 
 /** Business values the registrant injects into the settings page. */
 export interface SettingsSectionInjected {
@@ -259,6 +259,26 @@ export function SettingsSection(props: SettingsSectionProps): ReactNode {
             }}
           />
         </div>
+        <div className="aiar-row">
+          <div className="aiar-rowText">
+            <div className="aiar-rowLabel">{t('reviewTimeout')}</div>
+            <div className="aiar-rowHint">{t('reviewTimeoutHint')}</div>
+          </div>
+          <input
+            className="aiar-number"
+            type="number"
+            min={MIN_REVIEW_TIMEOUT_MS}
+            max={MAX_REVIEW_TIMEOUT_MS}
+            step={1000}
+            value={settings.reviewTimeoutMs}
+            aria-label={t('reviewTimeout')}
+            disabled={!editable}
+            onChange={(event) => {
+              const value = Number(event.currentTarget.value)
+              save('reviewTimeoutMs', Number.isFinite(value) ? Math.max(MIN_REVIEW_TIMEOUT_MS, Math.min(MAX_REVIEW_TIMEOUT_MS, Math.round(value))) : MIN_REVIEW_TIMEOUT_MS)
+            }}
+          />
+        </div>
       </div>
       <div className="aiar-panel">
         <div className="aiar-column">
@@ -271,7 +291,6 @@ export function SettingsSection(props: SettingsSectionProps): ReactNode {
             placeholder={t('promptDefault')}
             disabled={!editable}
             onChange={(event) => { editPrompt(event.currentTarget.value) }}
-            onBlur={flushPrompt}
           />
           <div className="aiar-rowHint">{t('promptHint')}</div>
           {catalogFailed ? <div className="aiar-status" data-tone="warn">{t('catalogFail')}</div> : null}

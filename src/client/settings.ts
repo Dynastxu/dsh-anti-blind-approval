@@ -11,10 +11,14 @@
 
 import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
 import {
-  DEFAULT_DELAY_SECONDS, MAX_DELAY_SECONDS, SETTINGS_NAMESPACE, normalizeSettings, type ReviewSettings,
+  DEFAULT_DELAY_SECONDS, DEFAULT_REVIEW_TIMEOUT_MS, MAX_DELAY_SECONDS, MIN_REVIEW_TIMEOUT_MS,
+  MAX_REVIEW_TIMEOUT_MS, SETTINGS_NAMESPACE, normalizeSettings, type ReviewSettings,
 } from '../settings-shared.ts'
 
-export { DEFAULT_DELAY_SECONDS, MAX_DELAY_SECONDS, SETTINGS_NAMESPACE }
+export {
+  DEFAULT_DELAY_SECONDS, DEFAULT_REVIEW_TIMEOUT_MS, MAX_DELAY_SECONDS, MIN_REVIEW_TIMEOUT_MS,
+  MAX_REVIEW_TIMEOUT_MS, SETTINGS_NAMESPACE,
+}
 export type { ReviewSettings }
 
 /** The prefixed section of the Host's projected form. */
@@ -27,10 +31,12 @@ export interface ReviewConfigSection {
   readonly delaySeconds?: number
   /** Replacement reviewer policy; empty uses the built-in prompt. */
   readonly prompt?: string
+  /** Maximum milliseconds one review may take before it fails with TIMEOUT. */
+  readonly reviewTimeoutMs?: number
 }
 
 /** Editable field names, in the order legacy settings are adopted. */
-export type SettingsField = 'enabled' | 'model' | 'delaySeconds' | 'prompt'
+export type SettingsField = 'enabled' | 'model' | 'delaySeconds' | 'prompt' | 'reviewTimeoutMs'
 
 /** One observable view of the profile's form. */
 export interface SettingsState {

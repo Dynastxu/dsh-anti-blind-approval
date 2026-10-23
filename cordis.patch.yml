@@ -9,4 +9,4 @@
         model: ''
         delaySeconds: 3
         prompt: ''
-        reviewTimeoutMs: 90000
+        reviewTimeoutMs: 10000

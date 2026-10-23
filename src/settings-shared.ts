@@ -10,6 +10,8 @@
  * @module dsh-anti-blind-approval/settings-shared
  */
 
+import { DEFAULT_REVIEW_TIMEOUT_MS as DEFAULT_REVIEW_TIMEOUT_MS_ORIG } from './prompt.ts'
+
 /**
  * Profile entry id. Also the settings namespace the browser form is requested
  * by, so a composition that renames the entry would have to change it here.
@@ -22,6 +24,15 @@ export const DEFAULT_DELAY_SECONDS = 3
 /** Longest cool-down the schema and the settings page accept. */
 export const MAX_DELAY_SECONDS = 30
 
+/** Default review timeout in milliseconds. */
+export const DEFAULT_REVIEW_TIMEOUT_MS = DEFAULT_REVIEW_TIMEOUT_MS_ORIG
+
+/** Shortest review timeout the schema and the settings page accept. */
+export const MIN_REVIEW_TIMEOUT_MS = 5_000
+
+/** Longest review timeout the schema and the settings page accept. */
+export const MAX_REVIEW_TIMEOUT_MS = 300_000
+
 /** One profile's reviewer preferences. */
 export interface ReviewSettings {
   /** Whether the panel takes over from the stock approval UI. */
@@ -32,6 +43,8 @@ export interface ReviewSettings {
   readonly delaySeconds: number
   /** Replacement reviewer policy; empty uses the built-in prompt. */
   readonly prompt: string
+  /** Maximum milliseconds one review may take before it fails with TIMEOUT. */
+  readonly reviewTimeoutMs: number
 }
 
 /**
@@ -45,10 +58,15 @@ export function normalizeSettings(raw: unknown): ReviewSettings {
   const delaySeconds = Number.isFinite(stored)
     ? Math.max(0, Math.min(MAX_DELAY_SECONDS, Math.round(stored)))
     : DEFAULT_DELAY_SECONDS
+  const storedTimeout = Number(value.reviewTimeoutMs)
+  const reviewTimeoutMs = Number.isFinite(storedTimeout)
+    ? Math.max(MIN_REVIEW_TIMEOUT_MS, Math.min(MAX_REVIEW_TIMEOUT_MS, Math.round(storedTimeout)))
+    : DEFAULT_REVIEW_TIMEOUT_MS
   return {
     enabled: value.enabled !== false,
     model: typeof value.model === 'string' ? value.model : '',
     delaySeconds,
     prompt: typeof value.prompt === 'string' ? value.prompt : '',
+    reviewTimeoutMs,
   }
 }
