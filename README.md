@@ -1,8 +1,8 @@
-# 反盲批 (Anti Blind Approval)
+<h1 align="center">反盲批</h1>
 
-> DeepSeek Harness 插件：会话处于「工作区内修改」（workspace-write）时，把提权申请同时交给模型审核，只返回 `{safe, reason}`；审核期间「允许」按钮显示加载环且不可点，判为不安全时再锁定 N 秒（默认 3 秒）。**最终决定权仍在人，不会自动放行。**
+DeepSeek Harness 插件：会话处于「工作区内修改」（workspace-write）时，把提权申请同时交给模型审核，只返回 `{safe, reason}`；审核期间「允许」按钮显示加载环且不可点，判为不安全时再锁定 N 秒（默认 3 秒）。**最终决定权仍在人，不会自动放行。**
 
-> 界面显示名：**反盲批 / Anti Blind Approval**。包标识与仓库/文件夹同名：`dsh-anti-blind-approval`，安装、卸载和命令里用这个包名。
+界面显示名：**反盲批 / Anti Blind Approval**。包标识与仓库/文件夹同名：`dsh-anti-blind-approval`，安装、卸载和命令里用这个包名。
 
 ```
 审批卡出现
