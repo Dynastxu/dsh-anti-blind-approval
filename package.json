@@ -2,7 +2,7 @@
   "name": "dsh-anti-blind-approval",
   "version": "0.3.0",
   "icon": "icon.svg",
-  "private": true,
+  "private": false,
   "description": "反盲批 / Anti Blind Approval — DeepSeek Harness approval guard: review workspace-write escalation requests with the session model, then gate the Allow button on a strict JSON verdict.",
   "type": "module",
   "main": "lib/index.js",
@@ -28,7 +28,8 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.client.json",
     "build:repo": "node ../node_modules/tsdown/dist/run.mjs",
     "typecheck:repo": "node ../node_modules/typescript/bin/tsc -p tsconfig.json && node ../node_modules/typescript/bin/tsc -p tsconfig.client.json",
-    "test": "node test/host.test.mjs && node test/client.test.mjs && node test/composition.test.mjs"
+    "test": "node test/host.test.mjs && node test/client.test.mjs && node test/composition.test.mjs",
+    "prepublishOnly": "pnpm run build"
   },
   "keywords": [
     "deepseek-harness",
