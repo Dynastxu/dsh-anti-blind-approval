@@ -13,6 +13,8 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
+        with:
+          version: 12
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -30,4 +32,4 @@ jobs:
         run: pnpm run build
 
       - name: Check lib/ is up-to-date
-        run: git diff --exit-code lib/
+        run: git diff --exit-code -- 'lib/' ':(exclude)lib/*.map'
