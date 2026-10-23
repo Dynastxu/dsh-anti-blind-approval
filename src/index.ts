@@ -1,28 +1,28 @@
 /**
- * dsh-ai-approval-review — Host half.
+ * dsh-anti-blind-approval — Host half.
  *
  * The browser half owns the approval panel; this half answers four exact Fetch
  * routes under `/api`:
  *
- *   POST /api/ai-approval-review/action
+ *   POST /api/anti-blind-approval/action
  *     Cheap scope probe: is this session in `workspace-write`, and what is the
  *     pending tool action behind the given approval call id? No model call.
  *
- *   POST /api/ai-approval-review/review
+ *   POST /api/anti-blind-approval/review
  *     Runs one JSON-output review with the configured model (default: the
  *     session's current route) and returns `{ safe, reason }`.
  *
- *   GET  /api/ai-approval-review/catalog
+ *   GET  /api/anti-blind-approval/catalog
  *     Providers/models for the settings picker plus the built-in prompt.
  *
- *   POST /api/ai-approval-review/test
+ *   POST /api/anti-blind-approval/test
  *     One review over synthetic facts, to check the model and credentials.
  *
  * The routes are served through the Host Connection service, so they inherit
  * the authenticated browser Peer and the Host/Origin fence. Nothing here
  * reaches the model-visible session log: the review is an auxiliary call.
  *
- * @module dsh-ai-approval-review
+ * @module dsh-anti-blind-approval
  */
 
 import type { Context } from '@deepseek-ai/cordis'
@@ -34,7 +34,7 @@ import { ROUTE_BASE } from './contract.ts'
 import { handleAction, handleCatalog, handleTest, makeReviewHandler } from './routes.ts'
 
 /** Cordis plugin name used by loader diagnostics. */
-export const name = 'anti-blind-approval'
+export const name = 'dsh-anti-blind-approval'
 
 /**
  * Hard services. `connection` is looked up lazily so the package still loads in
@@ -109,5 +109,5 @@ export function apply(ctx: Context): void {
   })
   ctx.effect(() => () => {
     inflight.clear()
-  }, 'anti-blind-approval: in-flight reviews')
+  }, 'dsh-anti-blind-approval: in-flight reviews')
 }

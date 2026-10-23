@@ -6,7 +6,7 @@
  * a review cannot reach model-visible context and costs the conversation no
  * tokens.
  *
- * @module dsh-ai-approval-review/review
+ * @module dsh-anti-blind-approval/review
  */
 
 import type { Context } from '@deepseek-ai/cordis'

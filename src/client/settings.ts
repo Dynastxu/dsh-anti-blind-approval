@@ -1,7 +1,7 @@
 /**
  * Panel preferences, kept in this browser's `localStorage` and never written
  * into the DSH configuration.
- * @module dsh-ai-approval-review/client/settings
+ * @module dsh-anti-blind-approval/client/settings
  */
 
 /** One browser's reviewer preferences. */
@@ -17,7 +17,7 @@ export interface ReviewSettings {
 }
 
 /** `localStorage` key holding {@link ReviewSettings}. */
-const STORAGE_KEY = 'dsh-ai-approval-review:v1'
+const STORAGE_KEY = 'dsh-anti-blind-approval:v1'
 
 /** Cool-down used when nothing valid is stored. */
 export const DEFAULT_DELAY_SECONDS = 3

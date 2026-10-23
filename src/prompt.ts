@@ -6,7 +6,7 @@
  * language moves: the panel sends the user's tag, and the Host replaces
  * `{language}` with a human-readable label before the request is sent.
  *
- * @module dsh-ai-approval-review/prompt
+ * @module dsh-anti-blind-approval/prompt
  */
 
 /** The one preset whose approval requests are reviewed. */

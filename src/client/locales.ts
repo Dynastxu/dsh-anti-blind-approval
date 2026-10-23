@@ -1,13 +1,13 @@
 /**
  * Copy for the anti-blind-approval surfaces: the approval panel and the
  * settings page, plus the failure codes the Host routes return.
- * @module dsh-ai-approval-review/client/locales
+ * @module dsh-anti-blind-approval/client/locales
  */
 
 import type { ReviewErrorCode } from '../types.ts'
 
 /** Dictionary namespace owned by this plugin. */
-export const NS = 'ai-approval-review'
+export const NS = 'anti-blind-approval'
 
 /** Simplified Chinese dictionary and key-set source of truth. */
 export const zh = {
@@ -141,6 +141,6 @@ export function errorKey(code: unknown): ApprovalKey {
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** Anti-blind-approval panel and settings copy. */
-    'ai-approval-review': ApprovalKey
+    'anti-blind-approval': ApprovalKey
   }
 }

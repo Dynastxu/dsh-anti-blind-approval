@@ -7,12 +7,12 @@
  * module-table specifiers. React and the UI primitives stay imports because the
  * shell seeds both into that table; everything else is bundled in.
  *
- * @module dsh-ai-approval-review/tsdown.config
+ * @module dsh-anti-blind-approval/tsdown.config
  */
 import { defineConfig } from 'tsdown'
 
 /** Loader id of the browser bundle: the package name, as the module table keys it. */
-const ID = 'dsh-ai-approval-review'
+const ID = 'dsh-anti-blind-approval'
 
 /** Browser module-table specifiers the client bundle leaves to the shell. */
 const BASELINE = [/^react(\/|$)/u, /^@deepseek-ai\/dsh-client-ui-primitives$/u]

@@ -1,5 +1,5 @@
 /**
- * dsh-ai-approval-review — browser half.
+ * dsh-anti-blind-approval — browser half.
  *
  * Two contributions:
  *   1. `conversation.composer` takeover for pending approvals, ahead of the
@@ -12,7 +12,7 @@
  *
  * Loaded through the shell's module table: `react`, `react/jsx-runtime`, and
  * the UI primitives are module-table entries, so this bundle carries no copy.
- * @module dsh-ai-approval-review/client
+ * @module dsh-anti-blind-approval/client
  */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
@@ -69,8 +69,8 @@ export function apply(ctx: ClientContext): void {
     style.textContent = CSS
     document.head.appendChild(style)
     return () => { style.remove() }
-  }, 'ai-approval-review: styles')
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ai-approval-review: dictionaries')
+  }, 'anti-blind-approval: styles')
+  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'anti-blind-approval: dictionaries')
   const t = ctx.locale.bind(NS)
   const reviews = createReviewCache()
 
@@ -107,7 +107,7 @@ export function apply(ctx: ClientContext): void {
 
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section',
-    id: 'ai-approval-review',
+    id: 'anti-blind-approval',
     order: 90,
     label: () => t('nav'),
     locale: NS,

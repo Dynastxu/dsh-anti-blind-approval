@@ -10,5 +10,5 @@
 # package's `dsh.client` declaration from the manifest nearest this module and
 # serves its built ./client export, so run the build before launching.
 - insert:
-    - id: ai-approval-review
+    - id: dsh-anti-blind-approval
       name: 'C:/Users/dynas/Documents/Code/deepseek-harness/dsh-anti-blind-approval/lib/index.js'

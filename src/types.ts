@@ -5,7 +5,7 @@
  * responses; the Host validates every field it reads because a request body is
  * an untrusted boundary. The client imports this module type-only.
  *
- * @module dsh-ai-approval-review/types
+ * @module dsh-anti-blind-approval/types
  */
 
 /** Stable error codes the panel localizes. */

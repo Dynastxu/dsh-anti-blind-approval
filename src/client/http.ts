@@ -1,7 +1,7 @@
 /**
  * Requests to the plugin's own Host routes. They ride the authenticated `/api`
  * carrier, so the browser's same-origin cookies are the whole credential story.
- * @module dsh-ai-approval-review/client/http
+ * @module dsh-anti-blind-approval/client/http
  */
 
 /** One failed request, carrying the HTTP status the caller may act on. */

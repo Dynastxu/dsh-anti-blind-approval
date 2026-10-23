@@ -5,7 +5,7 @@
  * Connection service, so it owns only body validation, the preset check, and
  * the response body. Nothing here writes to the session log.
  *
- * @module dsh-ai-approval-review/routes
+ * @module dsh-anti-blind-approval/routes
  */
 
 import type { Context } from '@deepseek-ai/cordis'

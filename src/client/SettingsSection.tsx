@@ -2,7 +2,7 @@
  * The plugin's settings page: the master switch, the reviewer model, the
  * cool-down, and the reviewer policy. Preferences live in this browser, so the
  * page writes `localStorage` and never the DSH configuration.
- * @module dsh-ai-approval-review/client/SettingsSection
+ * @module dsh-anti-blind-approval/client/SettingsSection
  */
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'

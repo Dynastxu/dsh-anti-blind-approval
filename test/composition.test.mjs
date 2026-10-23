@@ -8,10 +8,10 @@ import * as plugin from '../lib/index.js'
 
 /** The four routes one activated plugin contributes. */
 const PATHS = [
-  '/api/ai-approval-review/action',
-  '/api/ai-approval-review/review',
-  '/api/ai-approval-review/catalog',
-  '/api/ai-approval-review/test',
+  '/api/anti-blind-approval/action',
+  '/api/anti-blind-approval/review',
+  '/api/anti-blind-approval/catalog',
+  '/api/anti-blind-approval/test',
 ]
 
 const session = {

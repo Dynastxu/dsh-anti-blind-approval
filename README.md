@@ -2,13 +2,13 @@
 
 > DeepSeek Harness 插件：会话处于「工作区内修改」（workspace-write）时，把提权申请同时交给模型审核，只返回 `{safe, reason}`；审核期间「允许」按钮显示加载环且不可点，判为不安全时再锁定 N 秒（默认 3 秒）。**最终决定权仍在人，不会自动放行。**
 
-> 界面显示名：**反盲批 / Anti Blind Approval**。包标识仍为 `dsh-ai-approval-review`，安装、卸载和命令里用这个包名。
+> 界面显示名：**反盲批 / Anti Blind Approval**。包标识与仓库/文件夹同名：`dsh-anti-blind-approval`，安装、卸载和命令里用这个包名。
 
 ```
 审批卡出现
   ├─ 显示待审操作（工具名 + 参数）
-  ├─ POST /api/ai-approval-review/action   ← 确认会话 preset、取回操作预览
-  ├─ POST /api/ai-approval-review/review   ← 模型只返回 {"safe": bool, "reason": string}
+  ├─ POST /api/anti-blind-approval/action   ← 确认会话 preset、取回操作预览
+  ├─ POST /api/anti-blind-approval/review   ← 模型只返回 {"safe": bool, "reason": string}
   │    「允许」按钮：加载环 + 禁用
   ├─ safe=true   → 立即解锁「允许」，显示绿色结论
   └─ safe=false  → 红色结论 + 倒计时，N 秒后才可点「允许」
@@ -27,7 +27,7 @@
 | 审核提示词 | 内置（英文） | 可完全自定义；`{language}` 会替换为用户界面语言；JSON 输出契约由插件固定追加，不受影响 |
 | 测试审核 | — | 用内置样例跑一次真实模型调用，验证模型/凭据 |
 
-设置保存在**当前浏览器**的 `localStorage`（key `dsh-ai-approval-review:v1`），不会写入 DSH 配置。
+设置保存在**当前浏览器**的 `localStorage`（key `dsh-anti-blind-approval:v1`），不会写入 DSH 配置。
 
 ## 源码与构建
 
@@ -91,8 +91,8 @@ pnpm dsh --profile web --patch ./dsh-anti-blind-approval/cordis.dev.yml
 已验证的组合（隔离 `DSH_HOME`、闲置端口）：
 
 - `--dump-config` 末尾出现 `# == …cordis.dev.yml` 层与我们的行；
-- `GET /api/ai-approval-review/catalog` → 200，返回 provider 列表与内置提示词（宿主半已激活）；
-- 启动页 boot graph 的脚本批次里含 `dsh-ai-approval-review/client.js`，拉下来的 200 响应里有 `window.__ModuleLoader__.load({ id: "dsh-ai-approval-review", … })`。
+- `GET /api/anti-blind-approval/catalog` → 200，返回 provider 列表与内置提示词（宿主半已激活）；
+- 启动页 boot graph 的脚本批次里含 `dsh-anti-blind-approval/client.js`，拉下来的 200 响应里有 `window.__ModuleLoader__.load({ id: "dsh-anti-blind-approval", … })`。
 
 ## 安装进 profile（长期使用）
 
@@ -108,10 +108,10 @@ pnpm dsh --profile web
 
 改动源码后：`pnpm run build:repo`，再刷新 Web 页面（正在运行的 Host 不会重新读 `lib/index.js`，宿主变更需重启）。
 
-从 GitHub 直接安装同样不需要改 `allowBuilds`：仓库里带着 `lib/`，而且没有 `prepare`/`install`/`postinstall` 脚本，pnpm 不会要求授权执行任何依赖脚本。spec 里带 commit 才能复现同一次安装：
+从 GitHub 直接安装同样不需要改 `allowBuilds`：仓库里带着 `lib/`，而且没有 `prepare`/`install`/`postinstall` 脚本，pnpm 不会要求授权执行任何依赖脚本。spec 里建议带 commit 固定同一份产物（`#main` 则跟随主分支）：
 
 ```sh
-pnpm dsh plugin --profile desktop add github:Dynastxu/dsh-anti-blind-approval#dc2924c
+pnpm dsh plugin --profile desktop add github:Dynastxu/dsh-anti-blind-approval#main
 ```
 
 改动 `src/` 之后要重新提交 `lib/` 再推送，否则安装方拿到的是旧产物。
@@ -119,7 +119,7 @@ pnpm dsh plugin --profile desktop add github:Dynastxu/dsh-anti-blind-approval#dc
 卸载：
 
 ```sh
-pnpm dsh plugin --profile web remove dsh-ai-approval-review
+pnpm dsh plugin --profile web remove dsh-anti-blind-approval
 ```
 
 ## 行为与边界
@@ -136,10 +136,10 @@ pnpm dsh plugin --profile web remove dsh-ai-approval-review
 
 ```
 lib/index.js    宿主半（ESM，无运行时 import）
-  ├─ POST /api/ai-approval-review/action    preset 判定 + 待审操作预览（不调模型）
-  ├─ POST /api/ai-approval-review/review    调 ctx.llm.stream，严格解析 {safe, reason}
-  ├─ GET  /api/ai-approval-review/catalog   provider/model 列表 + 内置提示词
-  └─ POST /api/ai-approval-review/test      合成样例的连通性测试
+  ├─ POST /api/anti-blind-approval/action    preset 判定 + 待审操作预览（不调模型）
+  ├─ POST /api/anti-blind-approval/review    调 ctx.llm.stream，严格解析 {safe, reason}
+  ├─ GET  /api/anti-blind-approval/catalog   provider/model 列表 + 内置提示词
+  └─ POST /api/anti-blind-approval/test      合成样例的连通性测试
 lib/client.js   浏览器半（模块加载器格式，仅 require react / react-jsx-runtime / ui-primitives）
   ├─ conversation.composer  priority 0 接管审批面板（原生面板是 priority 1）
   └─ settings.section       「反盲批」设置页

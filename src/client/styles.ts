@@ -4,11 +4,11 @@
  * The bundle ships no CSS file: this text is injected into one `<style>` tag by
  * the plugin's `apply`, and removed with the plugin. Every value is a shared
  * `--dsw-*` token, so both surfaces follow the active theme.
- * @module dsh-ai-approval-review/client/styles
+ * @module dsh-anti-blind-approval/client/styles
  */
 
 /** Attribute marking the injected style tag as plugin-owned. */
-export const STYLE_MARKER = 'ai-approval-review'
+export const STYLE_MARKER = 'anti-blind-approval'
 
 /** Complete stylesheet text. */
 export const CSS = [

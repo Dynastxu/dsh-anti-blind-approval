@@ -6,7 +6,7 @@
  *
  * The human still decides. A failed review never allows by itself, and an
  * allowed review still needs a click.
- * @module dsh-ai-approval-review/client/ApprovalPanel
+ * @module dsh-anti-blind-approval/client/ApprovalPanel
  */
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'

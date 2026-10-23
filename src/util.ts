@@ -1,6 +1,6 @@
 /**
  * Small boundary helpers shared by the Host half.
- * @module dsh-ai-approval-review/util
+ * @module dsh-anti-blind-approval/util
  */
 
 import type { Branded } from '@deepseek-ai/dsh-brand'

@@ -26,8 +26,8 @@ globalThis.document = {
 
 const requests = []
 const responses = {
-  '/api/ai-approval-review/action': { active: true, preset: 'workspace-write', preview: 'bash\n{"command":"rm -rf /tmp/x"}' },
-  '/api/ai-approval-review/review': { active: true, safe: false, reason: '删除系统目录', model: 'fake/fake-1' },
+  '/api/anti-blind-approval/action': { active: true, preset: 'workspace-write', preview: 'bash\n{"command":"rm -rf /tmp/x"}' },
+  '/api/anti-blind-approval/review': { active: true, safe: false, reason: '删除系统目录', model: 'fake/fake-1' },
 }
 globalThis.fetch = async (url, init) => {
   requests.push({ url, body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined })
@@ -71,7 +71,7 @@ const requireStub = (id) => {
 
 await import('../lib/client.js')
 if (!captured) throw new Error('module was not registered')
-if (captured.id !== 'dsh-ai-approval-review') throw new Error('loader id must be the package name')
+if (captured.id !== 'dsh-anti-blind-approval') throw new Error('loader id must be the package name')
 
 const mod = captured.factory(requireStub)
 const registered = []
@@ -140,8 +140,8 @@ console.log('panel initial render ok')
 const cleanups = globalThis.__runEffects()
 await new Promise((resolve) => setTimeout(resolve, 20))
 if (requests.length !== 2) throw new Error('expected an action probe and a review, got ' + requests.length)
-if (requests[0].url !== '/api/ai-approval-review/action') throw new Error('first request must probe the scope')
-if (requests[1].url !== '/api/ai-approval-review/review') throw new Error('second request must run the review')
+if (requests[0].url !== '/api/anti-blind-approval/action') throw new Error('first request must probe the scope')
+if (requests[1].url !== '/api/anti-blind-approval/review') throw new Error('second request must run the review')
 for (const request of requests) {
   if (request.body.userLanguage !== 'zh') throw new Error('the review must carry the UI language tag, got ' + JSON.stringify(request.body.userLanguage))
   if (request.body.sessionId !== 's1') throw new Error('the review must carry the session id')
@@ -153,7 +153,7 @@ for (const cleanup of cleanups) if (typeof cleanup === 'function') cleanup()
 
 const settings = registered.find((r) => r.opts.name === 'settings.section')
 if (!settings) throw new Error('settings slot missing')
-if (settings.opts.id !== 'ai-approval-review') throw new Error('settings id wrong')
+if (settings.opts.id !== 'anti-blind-approval') throw new Error('settings id wrong')
 globalThis.__resetHooks()
 const settingsTree = settings.component({
   t: fakeT,
