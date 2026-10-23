@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1024" height="1024" role="img">
+  <title>ABA mark - primary</title>
+  <desc>ABA square emblem: chamfered dark plate, HUD corner brackets, neon green scan grid and glowing white geometric ABA lettering.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#0B151B"/><stop offset="1" stop-color="#05090C"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.55">
+      <stop offset="0" stop-color="#2EE59D" stop-opacity="0.14"/>
+      <stop offset="0.6" stop-color="#2EE59D" stop-opacity="0.039"/>
+      <stop offset="1" stop-color="#2EE59D" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0 H0 V32" fill="none" stroke="#2EE59D" stroke-width="1" stroke-opacity="0.05"/>
+    </pattern>
+    <filter id="neon" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="7.0" result="b"/>
+      <feFlood flood-color="#2EE59D" flood-opacity="0.38" result="c"/>
+      <feComposite in="c" in2="b" operator="in" result="g"/>
+      <feMerge><feMergeNode in="g"/><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="tile"><path d="M32 0 H480 L512 32 V480 L480 512 H32 L0 480 V32 Z"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#bg)"/>
+    <rect width="512" height="512" fill="url(#grid)"/>
+    <rect width="512" height="512" fill="url(#halo)"/>
+    <path d="M19.0 0 H493.0 L512 19.0 V493.0 L493.0 512 H19.0 L0 493.0 V19.0 Z" fill="none" stroke="#2EE59D" stroke-opacity="0.18" stroke-width="1.4" transform="translate(13.0,13.0) scale(0.949219)"/>
+    <path d="M36 90 V36 H90  M422 36 H476 V90  M476 422 V476 H422  M90 476 H36 V422" fill="none" stroke="#2EE59D" stroke-width="5" stroke-opacity="0.9"/>
+    <g transform="translate(54.000,196.588) scale(1.188235)" filter="url(#neon)">
+<path d="M0 100 L49.00 0 H61.00 L110.00 100 L76.24 100 L71.83 72.00 L38.17 72.00 L33.76 100 Z M38.17 63.00 L55.00 28.66 L71.83 63.00 Z" fill="#F2FBF7" fill-rule="evenodd"/><path transform="translate(230.00,0)" d="M0 100 L49.00 0 H61.00 L110.00 100 L76.24 100 L71.83 72.00 L38.17 72.00 L33.76 100 Z M38.17 63.00 L55.00 28.66 L71.83 63.00 Z" fill="#F2FBF7" fill-rule="evenodd"/><path transform="translate(128.00,0)" d="M0 0 H18.0 V100 H0 Z M9 0 H46 C64 0 80 10 80 23 C80 33 75 40.5 68 44 C75 47.5 84 55 84 70 C84 87 67 100 48 100 H9 Z M18 13 H50.75 A12.25 12.25 0 0 1 50.75 37.5 H18 Z M18 50.5 H51.75 A18.25 18.25 0 0 1 51.75 87 H18 Z" fill="#F2FBF7" fill-rule="evenodd"/>
+    </g>
+  </g>
+</svg>

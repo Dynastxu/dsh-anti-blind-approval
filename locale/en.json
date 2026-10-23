@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Anti Blind Approval",
+    "description": "Prevent users from directly allowing the model to escalate privileges without review."
+  }
+}

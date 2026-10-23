@@ -44,7 +44,7 @@ import { handleAction, handleCatalog, handleTest, makeReviewHandler } from './ro
 export { Config } from './config.ts'
 
 /** Cordis plugin name used by loader diagnostics. */
-export const name = 'dsh-anti-blind-approval'
+export const name = 'Anti Blind Approval'
 
 /**
  * Hard services. `connection` is looked up lazily so the package still loads in
