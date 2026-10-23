@@ -3,7 +3,7 @@
 # the package's dsh.client declaration, exactly like the shipped ui-* packages.
 - insert:
     - id: dsh-anti-blind-approval
-      name: 'dsh-anti-blind-approval'
+      name: '@dynastxu/dsh-anti-blind-approval'
       config:
         enabled: true
         model: ''
