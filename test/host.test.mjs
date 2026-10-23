@@ -1,7 +1,10 @@
-import { apply } from '../lib/index.js'
+import * as plugin from '../lib/index.js'
+
+const { apply } = plugin
 
 const routes = new Map()
 const calls = []
+const configured = []
 
 function makeCtx(preset, toolArguments) {
   const session = {
@@ -27,9 +30,14 @@ function makeCtx(preset, toolArguments) {
       },
     },
     get: (name) => (name === 'permissionPresets' ? { current: () => preset } : undefined),
+    fiber: {},
     connection: { fetch: { register: (route) => routes.set(route.path, route) } },
     effect: (fn) => fn(),
-    inject: (deps, cb) => cb({ connection: { fetch: { register: (route) => routes.set(route.path, route) } } }),
+    inject: (deps, cb) => cb({
+      connection: { fetch: { register: (route) => routes.set(route.path, route) } },
+      effect: (fn) => fn(),
+      settings: { configure: (policy, owner) => { configured.push(policy); return () => {} } },
+    }),
   }
 }
 
@@ -52,6 +60,10 @@ function assert(cond, message) {
 
 const ctx = makeCtx('workspace-write')
 apply(ctx)
+assert(typeof plugin.Config === 'function', 'Config schema is exported')
+const defaults = new plugin.Config()
+assert(defaults.enabled.get() === true && defaults.delaySeconds.get() === 3, 'Config defaults are live references')
+assert(configured.length === 1 && configured[0].auto === false, 'the plugin opts out of the automatic settings page')
 assert(routes.has('/api/anti-blind-approval/action'), 'action route registered')
 assert(routes.has('/api/anti-blind-approval/review'), 'review route registered')
 assert(routes.has('/api/anti-blind-approval/catalog'), 'catalog route registered')

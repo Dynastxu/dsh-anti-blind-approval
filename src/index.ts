@@ -18,6 +18,12 @@
  *   POST /api/anti-blind-approval/test
  *     One review over synthetic facts, to check the model and credentials.
  *
+ * The reviewer preferences live in this host entry's `Config`: every field is
+ * volatile, so the settings service projects them into the browser form the
+ * panel edits and `cordis.yml` can still supply them. The Host itself does not
+ * read them; the browser half reads the projected values through
+ * `ctx.configForms`.
+ *
  * The routes are served through the Host Connection service, so they inherit
  * the authenticated browser Peer and the Host/Origin fence. Nothing here
  * reaches the model-visible session log: the review is an auxiliary call.
@@ -26,12 +32,15 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-// Type-only service merges: ctx.sessions and ctx.llm.
+// Type-only service merges: ctx.sessions, ctx.llm, and ctx.settings.
 import type {} from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-llm'
+import type {} from '@deepseek-ai/dsh-settings'
 import type { InflightReviews } from './routes.ts'
 import { ROUTE_BASE } from './contract.ts'
 import { handleAction, handleCatalog, handleTest, makeReviewHandler } from './routes.ts'
+
+export { Config } from './config.ts'
 
 /** Cordis plugin name used by loader diagnostics. */
 export const name = 'dsh-anti-blind-approval'
@@ -78,6 +87,14 @@ function fetchRoutesOf(ctx: Context): FetchRouteRegistry | undefined {
  * @param ctx - Host context carrying the session and model services.
  */
 export function apply(ctx: Context): void {
+  // The panel ships its own settings page; keeping the automatic page off means
+  // a client that renders generated forms shows one page, not two.
+  ctx.inject(['settings'], (scope) => {
+    scope.effect(
+      () => scope.settings.configure({ auto: false }, ctx.fiber),
+      'dsh-anti-blind-approval: settings page policy',
+    )
+  })
   const inflight: InflightReviews = new Map()
   ctx.inject(['connection'], (scope) => {
     const routes = fetchRoutesOf(scope)

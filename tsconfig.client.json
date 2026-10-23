@@ -34,5 +34,5 @@
       "@deepseek-ai/dsh-client-ui-approval/client": ["../packages/client/ui-approval/lib/types/client/index.d.ts"]
     }
   },
-  "include": ["src/types.ts", "src/client/**/*.ts", "src/client/**/*.tsx"]
+  "include": ["src/types.ts", "src/settings-shared.ts", "src/client/**/*.ts", "src/client/**/*.tsx"]
 }

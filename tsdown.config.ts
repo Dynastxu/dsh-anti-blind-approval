@@ -29,6 +29,13 @@ export default defineConfig([
     dts: false,
     clean: false,
     sourcemap: true,
+    // `Config` is a schemastery schema: the Host half imports the package and
+    // the profile installs it as a dependency, exactly like the shipped
+    // plugins. The project's `paths` map it to its declarations for `tsc`, so
+    // the bundler must be told to keep the specifier as a runtime import.
+    deps: {
+      neverBundle: [/^@deepseek-ai\/(?:schemastery|cosmokit)(?:\/|$)/u],
+    },
   },
   {
     name: `${ID}/client`,

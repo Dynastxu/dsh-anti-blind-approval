@@ -8,7 +8,9 @@
  *      Allow disabled while the review runs and through the cool-down after an
  *      unsafe verdict. The human still makes the final decision.
  *   2. `settings.section` page: master switch, reviewer model, cool-down, and
- *      the custom policy, persisted in this browser.
+ *      the custom policy. Values live in the active profile's plugin
+ *      configuration, read and written through `ctx.configForms`; a one-time
+ *      migration adopts preferences earlier versions kept in `localStorage`.
  *
  * Loaded through the shell's module table: `react`, `react/jsx-runtime`, and
  * the UI primitives are module-table entries, so this bundle carries no copy.
@@ -22,18 +24,18 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 // Type-only: the `conversation.composer` SlotMap merge and its owner props.
 import type { ComposerChainProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
-// Type-only: the `settings.section` SlotMap merge.
+// Type-only: the `settings.section` SlotMap merge and the `ctx.configForms` merge.
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 // Type-only: the approval pending-interaction declaration.
 import type { PendingApproval } from '@deepseek-ai/dsh-client-ui-approval/client'
 import { ApprovalPanel, type CachedVerdict, type ReviewCache } from './ApprovalPanel.tsx'
 import { SettingsSection } from './SettingsSection.tsx'
 import { NS, en, zh } from './locales.ts'
-import { readSettings } from './settings.ts'
+import { SETTINGS_NAMESPACE, SettingsHandle, adoptLegacySettings, type ReviewConfigSection } from './settings.ts'
 import { CSS, STYLE_MARKER } from './styles.ts'
 
-/** Required services: the slot registry and the dictionary registry. */
-export const inject = ['slots', 'locale']
+/** Required services: slot registry, dictionaries, and the settings form service. */
+export const inject = ['slots', 'locale', 'configForms']
 
 /** Verdicts one page keeps before it starts over. */
 const CACHE_LIMIT = 64
@@ -73,6 +75,8 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'anti-blind-approval: dictionaries')
   const t = ctx.locale.bind(NS)
   const reviews = createReviewCache()
+  const settings = new SettingsHandle(ctx.configForms.get<ReviewConfigSection>(SETTINGS_NAMESPACE))
+  ctx.effect(() => adoptLegacySettings(settings), 'anti-blind-approval: legacy settings migration')
 
   /**
    * The language the user reads this UI in. The reviewer writes its
@@ -94,7 +98,7 @@ export function apply(ctx: ClientContext): void {
       const pending = owner.pendingInteraction
       if (pending === undefined || pending.kind !== 'approval') return null
       // Disabled means "restore the stock panel", not "render a plain copy".
-      if (!readSettings().enabled) return null
+      if (!settings.snapshot().settings.enabled) return null
       return pending
     },
     locale: NS,
@@ -102,6 +106,7 @@ export function apply(ctx: ClientContext): void {
       resolveReason: (reason: NonNullable<PendingApproval['displayReason']>) => ctx.locale.resolveText(reason),
       userLanguage,
       reviews,
+      settings,
     }),
   }, ApprovalPanel))
 
@@ -111,6 +116,6 @@ export function apply(ctx: ClientContext): void {
     order: 90,
     label: () => t('nav'),
     locale: NS,
-    inject: () => ({ userLanguage }),
+    inject: () => ({ userLanguage, settings }),
   }, SettingsSection))
 }

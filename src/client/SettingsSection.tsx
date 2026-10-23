@@ -1,7 +1,12 @@
 /**
  * The plugin's settings page: the master switch, the reviewer model, the
- * cool-down, and the reviewer policy. Preferences live in this browser, so the
- * page writes `localStorage` and never the DSH configuration.
+ * cool-down, and the reviewer policy.
+ *
+ * The values are the Host entry's volatile `Config` fields projected through
+ * `ctx.configForms`, so they are written into the active profile's DSH
+ * configuration (and can also be supplied from `cordis.yml`) instead of living
+ * in one browser. A profile that serves no writable form gets a read-only page.
+ *
  * @module dsh-anti-blind-approval/client/SettingsSection
  */
 
@@ -14,7 +19,7 @@ import type {
 import { ROUTE_BASE } from '../contract.ts'
 import { getJson, postJson } from './http.ts'
 import { NS, errorKey } from './locales.ts'
-import { MAX_DELAY_SECONDS, readSettings, writeSettings, type ReviewSettings } from './settings.ts'
+import { MAX_DELAY_SECONDS, type SettingsField, type SettingsHandle } from './settings.ts'
 
 /** Business values the registrant injects into the settings page. */
 export interface SettingsSectionInjected {
@@ -23,6 +28,9 @@ export interface SettingsSectionInjected {
    * @returns a BCP 47-style tag, or `''` when the UI has none.
    */
   userLanguage(): string
+
+  /** The profile's configuration form, shared with the panel. */
+  settings: SettingsHandle
 }
 
 /** Full props of the settings page. */
@@ -40,50 +48,110 @@ interface TestState {
 /** How long the "saved" acknowledgement stays visible. */
 const SAVED_MS = 1_600
 
+/** Idle time before a prompt edit is written, so typing does not write per key. */
+const PROMPT_WRITE_MS = 600
+
 /**
  * Render the anti-blind-approval settings page.
  * @param props - owner, locale, and registrant-injected shares.
  * @returns the settings page.
  */
 export function SettingsSection(props: SettingsSectionProps): ReactNode {
-  const { t, userLanguage } = props
-  const [settings, setSettings] = useState(readSettings)
+  const { t, userLanguage, settings: handle } = props
+  const [state, setState] = useState(() => handle.snapshot())
+  const settings = state.settings
+  const editable = state.status === 'ready' && state.writable
   const [catalog, setCatalog] = useState<ReviewCatalogResponse | null>(null)
   const [catalogFailed, setCatalogFailed] = useState(false)
   const [draft, setDraft] = useState(settings.prompt)
   const [saved, setSaved] = useState(false)
+  const [saveFailed, setSaveFailed] = useState(false)
   const [test, setTest] = useState<TestState | null>(null)
   const savedTimer = useRef(0)
-  const promptRef = useRef(settings.prompt)
-  promptRef.current = settings.prompt
+  const promptTimer = useRef(0)
+  const pendingPrompt = useRef<string | null>(null)
+  const lastStoredPrompt = useRef(settings.prompt)
+  const alive = useRef(true)
+
+  useEffect(() => handle.subscribe(() => { setState(handle.snapshot()) }), [handle])
 
   useEffect(() => {
-    let alive = true
+    let live = true
     void getJson<ReviewCatalogResponse>(`${ROUTE_BASE}/catalog`)
       .then((data) => {
-        if (!alive) return
+        if (!live) return
         setCatalog(data)
-        if (promptRef.current === '' && typeof data.defaultPrompt === 'string') setDraft(data.defaultPrompt)
+        if (settings.prompt === '' && typeof data.defaultPrompt === 'string') setDraft(data.defaultPrompt)
       })
       .catch(() => {
-        if (alive) setCatalogFailed(true)
+        if (live) setCatalogFailed(true)
       })
-    return () => { alive = false }
+    return () => { live = false }
+    // One read at mount; the form's current value seeds only that first draft.
   }, [])
 
-  useEffect(() => () => {
-    if (savedTimer.current !== 0) clearTimeout(savedTimer.current)
-  }, [])
-
-  const patch = (next: Partial<ReviewSettings>): void => {
-    setSettings(writeSettings(next))
-    setSaved(true)
+  /** Show the saved or failed acknowledgement for the latest write. */
+  const noteSaved = (ok: boolean): void => {
+    if (!alive.current) return
+    setSaved(ok)
+    setSaveFailed(!ok)
     if (savedTimer.current !== 0) clearTimeout(savedTimer.current)
     savedTimer.current = window.setTimeout(() => {
+      if (!alive.current) return
       setSaved(false)
       savedTimer.current = 0
     }, SAVED_MS)
   }
+
+  /** Queue one configuration write and report its settlement. */
+  const save = (field: SettingsField, value: unknown): void => {
+    if (alive.current) setSaveFailed(false)
+    void handle.set(field, value).then(
+      (ok) => { noteSaved(ok) },
+      () => { noteSaved(false) },
+    )
+  }
+
+  /** Queue one field clear (back to the inherited default). */
+  const clear = (field: SettingsField): void => {
+    if (alive.current) setSaveFailed(false)
+    void handle.unset(field).then(
+      (ok) => { noteSaved(ok) },
+      () => { noteSaved(false) },
+    )
+  }
+
+  /** Write the pending prompt edit, if the debounce has not run yet. */
+  const flushPrompt = (): void => {
+    if (promptTimer.current !== 0) {
+      clearTimeout(promptTimer.current)
+      promptTimer.current = 0
+    }
+    const value = pendingPrompt.current
+    pendingPrompt.current = null
+    if (value !== null) save('prompt', value)
+  }
+
+  /** Keep the draft local while the user types, then write it once. */
+  const editPrompt = (value: string): void => {
+    setDraft(value)
+    pendingPrompt.current = value
+    if (promptTimer.current !== 0) clearTimeout(promptTimer.current)
+    promptTimer.current = window.setTimeout(flushPrompt, PROMPT_WRITE_MS)
+  }
+
+  useEffect(() => () => {
+    alive.current = false
+    flushPrompt()
+  }, [])
+
+  // Another browser may change the prompt; follow it unless this one is editing.
+  useEffect(() => {
+    if (settings.prompt === lastStoredPrompt.current) return
+    lastStoredPrompt.current = settings.prompt
+    if (pendingPrompt.current !== null || settings.prompt === '') return
+    setDraft(settings.prompt)
+  }, [settings.prompt])
 
   /** One failure's localized label plus its diagnostic detail. */
   const failureText = (data: TestReviewResponse): string => {
@@ -137,6 +205,12 @@ export function SettingsSection(props: SettingsSectionProps): ReactNode {
     <div className="aiar-settings">
       <h2 className="aiar-settingsTitle">{t('title')}</h2>
       <p className="aiar-settingsIntro">{t('intro')}</p>
+      {state.status === 'unavailable' ? (
+        <div className="aiar-status" data-tone="warn">{t('configUnavailable')}</div>
+      ) : null}
+      {state.status === 'ready' && !state.writable ? (
+        <div className="aiar-status" data-tone="warn">{t('configReadonly')}</div>
+      ) : null}
       <div className="aiar-panel">
         <div className="aiar-row">
           <div className="aiar-rowText">
@@ -146,7 +220,8 @@ export function SettingsSection(props: SettingsSectionProps): ReactNode {
           <Switch
             checked={settings.enabled}
             label={t('enabled')}
-            onChange={(next) => { patch({ enabled: next }) }}
+            disabled={!editable}
+            onChange={(next) => { save('enabled', next) }}
           />
         </div>
         <div className="aiar-row">
@@ -158,7 +233,8 @@ export function SettingsSection(props: SettingsSectionProps): ReactNode {
             className="aiar-select"
             value={settings.model}
             aria-label={t('model')}
-            onChange={(event) => { patch({ model: event.currentTarget.value }) }}
+            disabled={!editable}
+            onChange={(event) => { save('model', event.currentTarget.value) }}
           >
             {modelOptions}
           </select>
@@ -176,9 +252,10 @@ export function SettingsSection(props: SettingsSectionProps): ReactNode {
             step={1}
             value={settings.delaySeconds}
             aria-label={t('delay')}
+            disabled={!editable}
             onChange={(event) => {
               const value = Number(event.currentTarget.value)
-              patch({ delaySeconds: Number.isFinite(value) ? Math.max(0, Math.min(MAX_DELAY_SECONDS, Math.round(value))) : 0 })
+              save('delaySeconds', Number.isFinite(value) ? Math.max(0, Math.min(MAX_DELAY_SECONDS, Math.round(value))) : 0)
             }}
           />
         </div>
@@ -192,20 +269,24 @@ export function SettingsSection(props: SettingsSectionProps): ReactNode {
             spellCheck={false}
             aria-label={t('prompt')}
             placeholder={t('promptDefault')}
-            onChange={(event) => {
-              const value = event.currentTarget.value
-              setDraft(value)
-              patch({ prompt: value })
-            }}
+            disabled={!editable}
+            onChange={(event) => { editPrompt(event.currentTarget.value) }}
+            onBlur={flushPrompt}
           />
           <div className="aiar-rowHint">{t('promptHint')}</div>
           {catalogFailed ? <div className="aiar-status" data-tone="warn">{t('catalogFail')}</div> : null}
           <div className="aiar-toolbar">
             <Button
               variant="outline"
+              disabled={!editable}
               onClick={() => {
+                pendingPrompt.current = null
+                if (promptTimer.current !== 0) {
+                  clearTimeout(promptTimer.current)
+                  promptTimer.current = 0
+                }
                 setDraft(catalog?.defaultPrompt ?? '')
-                patch({ prompt: '' })
+                clear('prompt')
               }}
             >
               {t('promptReset')}
@@ -218,6 +299,7 @@ export function SettingsSection(props: SettingsSectionProps): ReactNode {
               {t('test')}
             </Button>
             {saved ? <span className="aiar-status" data-tone="ok">{t('saved')}</span> : null}
+            {saveFailed ? <span className="aiar-status" data-tone="warn">{t('saveFailed')}</span> : null}
             {test === null ? null : (
               <span className="aiar-status" data-tone={testTone(test.status)}>{test.text}</span>
             )}

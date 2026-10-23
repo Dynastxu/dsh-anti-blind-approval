@@ -23,12 +23,20 @@ const session = {
 const sessions = { get: (id) => (id === 's1' ? session : undefined) }
 const llm = { listProviders: () => [], listModels: async () => [], stream: () => { throw new Error('unused') } }
 
+/** Page policies the plugin registered with a fake settings service. */
+const configured = []
+
 /** Boot one real Context with the given services and return the registered paths. */
 function routesFor(services) {
   const registered = []
   const ctx = new Context()
   ctx.provide('sessions', sessions)
   ctx.provide('llm', llm)
+  if (services.settings) {
+    ctx.provide('settings', {
+      configure(policy) { configured.push(policy); return () => {} },
+    })
+  }
   if (services.connection) {
     ctx.provide('connection', {
       fetch: {
@@ -51,6 +59,14 @@ for (const path of PATHS) {
   if (!full.includes(path)) throw new Error('missing route ' + path)
 }
 console.log('ok - activates with every declared service and registers four routes')
+
+const withSettings = routesFor({ connection: true, permissionPresets: true, settings: true })
+await new Promise(resolve => setTimeout(resolve, 20))
+if (withSettings.length !== PATHS.length) throw new Error('a composition with Settings must still register four routes')
+if (configured.length !== 1 || configured[0].auto !== false) {
+  throw new Error('the plugin must opt out of the automatic settings page')
+}
+console.log('ok - opts out of the automatic settings page when Settings is composed')
 
 const withoutConnection = routesFor({ connection: false, permissionPresets: true })
 await new Promise(resolve => setTimeout(resolve, 20))

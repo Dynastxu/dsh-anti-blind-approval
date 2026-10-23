@@ -1,75 +1,180 @@
 /**
- * Panel preferences, kept in this browser's `localStorage` and never written
- * into the DSH configuration.
+ * The browser face of this plugin's configuration form.
+ *
+ * The values live in the active profile's DSH configuration: the Host entry's
+ * volatile `Config` fields are projected by the settings service, and
+ * `ctx.configForms` gives every browser one shared, revision-fenced form over
+ * them. `localStorage` is read once, only to adopt preferences written by
+ * versions that kept them in the browser.
+ *
  * @module dsh-anti-blind-approval/client/settings
  */
 
-/** One browser's reviewer preferences. */
-export interface ReviewSettings {
+import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
+import {
+  DEFAULT_DELAY_SECONDS, MAX_DELAY_SECONDS, SETTINGS_NAMESPACE, normalizeSettings, type ReviewSettings,
+} from '../settings-shared.ts'
+
+export { DEFAULT_DELAY_SECONDS, MAX_DELAY_SECONDS, SETTINGS_NAMESPACE }
+export type { ReviewSettings }
+
+/** The prefixed section of the Host's projected form. */
+export interface ReviewConfigSection {
   /** Whether the panel takes over from the stock approval UI. */
-  readonly enabled: boolean
+  readonly enabled?: boolean
   /** `provider::model` override; empty follows the current session route. */
-  readonly model: string
-  /** Seconds the Allow button stays locked after an unsafe verdict or a failure. */
-  readonly delaySeconds: number
+  readonly model?: string
+  /** Seconds Allow stays locked after an unsafe verdict or a failed review. */
+  readonly delaySeconds?: number
   /** Replacement reviewer policy; empty uses the built-in prompt. */
-  readonly prompt: string
+  readonly prompt?: string
 }
 
-/** `localStorage` key holding {@link ReviewSettings}. */
-const STORAGE_KEY = 'dsh-anti-blind-approval:v1'
+/** Editable field names, in the order legacy settings are adopted. */
+export type SettingsField = 'enabled' | 'model' | 'delaySeconds' | 'prompt'
 
-/** Cool-down used when nothing valid is stored. */
-export const DEFAULT_DELAY_SECONDS = 3
+/** One observable view of the profile's form. */
+export interface SettingsState {
+  /** `loading` before the Host's first view, `unavailable` when the entry is not served. */
+  readonly status: 'loading' | 'ready' | 'unavailable'
+  /** Whether the active profile accepts writes at all. */
+  readonly writable: boolean
+  /** Effective preferences: schema defaults overlaid with the profile's overrides. */
+  readonly settings: ReviewSettings
+  /** Fields the profile explicitly overrides, so an inherited default stays inherited. */
+  readonly overridden: ReadonlySet<string>
+}
 
-/** Longest cool-down the settings page accepts. */
-export const MAX_DELAY_SECONDS = 30
+/** One browser's handle on the profile's reviewer configuration. */
+export class SettingsHandle {
+  /**
+   * @param form - shared form for this plugin's profile entry.
+   */
+  constructor(private readonly form: ConfigForm<ReviewConfigSection>) {}
 
-/**
- * Read stored preferences into their valid range.
- * @param raw - parsed `localStorage` value, which may be absent or corrupt.
- * @returns complete preferences with a bounded cool-down.
- */
-function normalizeSettings(raw: unknown): ReviewSettings {
-  const value = raw !== null && typeof raw === 'object' ? raw as Record<string, unknown> : {}
-  const stored = Number(value.delaySeconds)
-  const delaySeconds = Number.isFinite(stored)
-    ? Math.max(0, Math.min(MAX_DELAY_SECONDS, Math.round(stored)))
-    : DEFAULT_DELAY_SECONDS
-  return {
-    enabled: value.enabled !== false,
-    model: typeof value.model === 'string' ? value.model : '',
-    delaySeconds,
-    prompt: typeof value.prompt === 'string' ? value.prompt : '',
+  /** @returns the current availability plus the effective preferences. */
+  snapshot(): SettingsState {
+    const raw = this.form.getSnapshot()
+    const user = raw.user
+    const overridden = new Set(
+      user !== null && typeof user === 'object' && !Array.isArray(user) ? Object.keys(user) : [],
+    )
+    return {
+      status: raw.status,
+      writable: raw.writable,
+      settings: normalizeSettings(raw.value),
+      overridden,
+    }
+  }
+
+  /**
+   * Observe value and availability changes.
+   * @param listener - invoked after each snapshot change.
+   * @returns the disposer removing this listener.
+   */
+  subscribe(listener: () => void): () => void {
+    return this.form.subscribe(listener)
+  }
+
+  /**
+   * Queue one field write into the profile's configuration.
+   * @param field - field to overwrite.
+   * @param value - new value, as the JSON-shaped form expects it.
+   * @returns whether the Host accepted the write.
+   */
+  set(field: SettingsField, value: unknown): Promise<boolean> {
+    return this.form.set(field, value)
+  }
+
+  /**
+   * Clear one field so it inherits the composition default again.
+   * @param field - field to clear.
+   * @returns whether the Host accepted the clear.
+   */
+  unset(field: SettingsField): Promise<boolean> {
+    return this.form.unset(field)
   }
 }
 
+/** `localStorage` key earlier versions wrote. */
+const LEGACY_KEY = 'dsh-anti-blind-approval:v1'
+
+/** Legacy fields in adoption order. */
+const LEGACY_FIELDS: readonly SettingsField[] = ['enabled', 'model', 'delaySeconds', 'prompt']
+
 /**
- * Read this browser's preferences.
- * @returns current preferences; defaults when nothing valid is stored.
+ * Read the legacy browser section, if one is present and readable.
+ * @returns the stored subsection, or undefined when there is nothing to adopt.
  */
-export function readSettings(): ReviewSettings {
-  let raw: unknown = null
+function readLegacy(): Record<string, unknown> | undefined {
+  if (typeof localStorage === 'undefined') return undefined
   try {
-    raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null')
+    const raw: unknown = JSON.parse(localStorage.getItem(LEGACY_KEY) ?? 'null')
+    return raw !== null && typeof raw === 'object' && !Array.isArray(raw)
+      ? raw as Record<string, unknown>
+      : undefined
   } catch {
-    // A corrupt entry must not disable the panel: fall back to defaults.
-    raw = null
+    return undefined
   }
-  return normalizeSettings(raw)
 }
 
 /**
- * Write one patch of preferences.
- * @param patch - fields to change.
- * @returns the complete preferences after the write.
+ * Adopt preferences written by versions that kept them in `localStorage`.
+ *
+ * Only fields the profile does not already override are written, so a
+ * configuration file always wins. The legacy key is removed once every write
+ * was accepted; a composition that serves no writable form keeps the key for a
+ * later load instead of dropping values it could not persist.
+ *
+ * @param handle - this browser's form handle.
+ * @returns a disposer ending the watcher.
  */
-export function writeSettings(patch: Partial<ReviewSettings>): ReviewSettings {
-  const next = normalizeSettings({ ...readSettings(), ...patch })
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-  } catch {
-    // Private mode or a full quota keeps the in-memory value the caller renders.
+export function adoptLegacySettings(handle: SettingsHandle): () => void {
+  const legacy = readLegacy()
+  if (legacy === undefined) return () => {}
+  const values = normalizeSettings(legacy)
+  let stopped = false
+  let running = false
+  let stopWatch: (() => void) | undefined
+
+  const stop = (remove: boolean): void => {
+    stopped = true
+    stopWatch?.()
+    stopWatch = undefined
+    if (!remove) return
+    try {
+      localStorage.removeItem(LEGACY_KEY)
+    } catch {
+      // A blocked storage keeps the key; the values are already persisted.
+    }
   }
-  return next
+
+  const attempt = async (): Promise<void> => {
+    if (stopped || running) return
+    const state = handle.snapshot()
+    if (state.status === 'loading') return
+    // A composition that serves no writable form yet is left watching: the
+    // mirror may still deliver the entry once the Host describe settles.
+    if (state.status !== 'ready' || !state.writable) return
+    running = true
+    try {
+      for (const field of LEGACY_FIELDS) {
+        if (state.overridden.has(field) || legacy[field] === undefined) continue
+        if (!(await handle.set(field, values[field]))) {
+          stop(false)
+          return
+        }
+      }
+      stop(true)
+    } catch {
+      // A transport failure keeps the legacy value for the next load.
+      stop(false)
+    } finally {
+      running = false
+    }
+  }
+
+  stopWatch = handle.subscribe(() => { void attempt() })
+  void attempt()
+  return () => { stop(false) }
 }

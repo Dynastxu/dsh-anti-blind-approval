@@ -17,7 +17,7 @@ import type { ActionProbeResponse, ReviewResponse, Verdict } from '../types.ts'
 import { ROUTE_BASE } from '../contract.ts'
 import { HttpError, postJson } from './http.ts'
 import { NS, errorKey, type ApprovalKey } from './locales.ts'
-import { readSettings } from './settings.ts'
+import type { SettingsHandle } from './settings.ts'
 
 /** One verdict this page already paid for. */
 export interface CachedVerdict {
@@ -61,6 +61,9 @@ export interface ApprovalPanelInjected {
 
   /** Verdicts already paid for in this page. */
   reviews: ReviewCache
+
+  /** The profile's reviewer preferences, read from its configuration form. */
+  settings: SettingsHandle
 }
 
 /** Full props of the approval takeover. */
@@ -94,7 +97,7 @@ const TICK_MS = 200
  * @returns the approval card.
  */
 export function ApprovalPanel(props: ApprovalPanelProps): ReactNode {
-  const { matched: pending, t, resolveReason, userLanguage: readUserLanguage, reviews } = props
+  const { matched: pending, t, resolveReason, userLanguage: readUserLanguage, reviews, settings } = props
   const [phase, setPhase] = useState<Phase>('checking')
   const [preview, setPreview] = useState('')
   const [verdict, setVerdict] = useState<Verdict & { readonly model: string } | null>(null)
@@ -143,8 +146,8 @@ export function ApprovalPanel(props: ApprovalPanelProps): ReactNode {
   // Keyed on the request identity alone: a re-render or a locale switch must
   // never spend a second review for the same approval.
   useEffect(() => {
-    const settings = readSettings()
-    if (!settings.enabled) {
+    const current = settings.snapshot().settings
+    if (!current.enabled) {
       setPhase('off')
       return undefined
     }
@@ -157,7 +160,7 @@ export function ApprovalPanel(props: ApprovalPanelProps): ReactNode {
         setPhase('safe')
       } else {
         setPhase('unsafe')
-        beginHold(settings.delaySeconds)
+        beginHold(current.delaySeconds)
       }
       return undefined
     }
@@ -188,14 +191,14 @@ export function ApprovalPanel(props: ApprovalPanelProps): ReactNode {
       setPhase('reviewing')
       const result = await postJson<ReviewResponse>(`${ROUTE_BASE}/review`, {
         ...base,
-        prompt: settings.prompt,
-        model: settings.model,
+        prompt: current.prompt,
+        model: current.model,
       }, controller.signal)
       if (!aliveRef.current) return
       if (typeof result.errorCode === 'string') {
         setFailure(result)
         setPhase('error')
-        beginHold(settings.delaySeconds)
+        beginHold(current.delaySeconds)
         return
       }
       if (typeof result.preview === 'string' && result.preview !== '') setPreview(result.preview)
@@ -212,7 +215,7 @@ export function ApprovalPanel(props: ApprovalPanelProps): ReactNode {
         setPhase('safe')
       } else {
         setPhase('unsafe')
-        beginHold(settings.delaySeconds)
+        beginHold(current.delaySeconds)
       }
     }
     void run().catch((error: unknown) => {
@@ -225,7 +228,7 @@ export function ApprovalPanel(props: ApprovalPanelProps): ReactNode {
       }
       setFailure({ errorCode: 'NETWORK', detail: error instanceof Error ? error.message : String(error) })
       setPhase('error')
-      beginHold(settings.delaySeconds)
+      beginHold(current.delaySeconds)
     })
     return () => { controller.abort() }
     // Identity of the pending request is the only axis: `t`, the injected

@@ -1,6 +1,6 @@
 {
   "name": "dsh-anti-blind-approval",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "反盲批 / Anti Blind Approval — DeepSeek Harness approval guard: review workspace-write escalation requests with the session model, then gate the Allow button on a strict JSON verdict.",
   "type": "module",
@@ -47,6 +47,9 @@
         "@deepseek-ai/dsh-client-ui-approval"
       ]
     }
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.5"
   },
   "devDependencies": {
     "tsdown": "^0.22.2",
