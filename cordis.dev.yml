@@ -12,3 +12,9 @@
 - insert:
     - id: dsh-anti-blind-approval
       name: 'C:/Users/dynas/Documents/Code/deepseek-harness/dsh-anti-blind-approval/lib/index.js'
+      config:
+        enabled: true
+        model: ''
+        delaySeconds: 3
+        prompt: ''
+        reviewTimeoutMs: 90000

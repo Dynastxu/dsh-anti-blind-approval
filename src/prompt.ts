@@ -12,8 +12,8 @@
 /** The one preset whose approval requests are reviewed. */
 export const REVIEWED_PRESET = 'workspace-write'
 
-/** Hard ceiling for one review; the panel shows an error afterwards. */
-export const REVIEW_TIMEOUT_MS = 90_000
+/** Default maximum milliseconds one review may take; overridable through plugin config. */
+export const DEFAULT_REVIEW_TIMEOUT_MS = 10_000
 
 /** Caps that keep a hostile or oversized input from inflating the request. */
 export const MAX_PROMPT_CHARS = 8_000

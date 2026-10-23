@@ -10,20 +10,22 @@
  * @module dsh-anti-blind-approval/config
  */
 
-import type { Volatile } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
+import { DEFAULT_REVIEW_TIMEOUT_MS } from './prompt.ts'
 import { DEFAULT_DELAY_SECONDS, MAX_DELAY_SECONDS } from './settings-shared.ts'
 
 /** Live preference references the Host hands an activated plugin instance. */
 export interface Config {
   /** Whether the panel takes over from the stock approval UI. */
-  enabled: Volatile<boolean>
+  enabled: boolean
   /** `provider::model` override; empty follows the current session route. */
-  model: Volatile<string>
+  model: string
   /** Seconds Allow stays locked after an unsafe verdict or a failed review. */
-  delaySeconds: Volatile<number>
+  delaySeconds: number
   /** Replacement reviewer policy; empty uses the built-in prompt. */
-  prompt: Volatile<string>
+  prompt: string
+  /** Maximum milliseconds one review may take before it fails with TIMEOUT. */
+  reviewTimeoutMs: number
 }
 
 /** Editable preferences, exposed through the profile's settings form. */
@@ -39,5 +41,8 @@ export const Config = z.object({
   ).volatile(),
   prompt: z.string().default('').description(
     'Replacement reviewer policy. Empty uses the built-in English prompt; {language} is replaced with the UI language.',
+  ).volatile(),
+  reviewTimeoutMs: z.number().step(1000).min(5_000).max(300_000).default(DEFAULT_REVIEW_TIMEOUT_MS).description(
+    'Maximum milliseconds one review may take before it fails with TIMEOUT.',
   ).volatile(),
 })

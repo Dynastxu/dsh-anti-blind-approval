@@ -16,7 +16,7 @@ import type {} from '@deepseek-ai/dsh-llm'
 import type { ReviewErrorCode, ReviewRequestBase, Verdict } from './types.ts'
 import {
   DEFAULT_PROMPT, MAX_PREVIEW_CHARS, MAX_PROMPT_CHARS, MAX_VERDICT_REASON_CHARS,
-  REVIEW_TIMEOUT_MS, normalizeLanguage, reviewSystem,
+  normalizeLanguage, reviewSystem,
 } from './prompt.ts'
 import { clip, isRecord } from './util.ts'
 
@@ -322,11 +322,12 @@ export async function reviewOnce(
   system: string,
   userText: string,
   requestSignal: AbortSignal | undefined,
+  timeoutMs: number,
 ): Promise<ReviewOutcome> {
   const controller = new AbortController()
   const timer = setTimeout(() => {
     controller.abort(new ReviewFailure('TIMEOUT'))
-  }, REVIEW_TIMEOUT_MS)
+  }, timeoutMs)
   const onAbort = (): void => { controller.abort(requestSignal?.reason) }
   requestSignal?.addEventListener('abort', onAbort, { once: true })
   const started = Date.now()
@@ -369,6 +370,7 @@ export async function runReview(
   session: Session,
   input: RunReviewOptions,
   preset: string,
+  timeoutMs: number,
 ): Promise<ReviewOutcome & { readonly preview: string }> {
   const route = await resolveRoute(ctx, session, input.model)
   if (route === undefined) throw new ReviewFailure('NO_MODEL')
@@ -377,6 +379,6 @@ export async function runReview(
   const policy = custom === '' ? DEFAULT_PROMPT : clip(custom, MAX_PROMPT_CHARS)
   const action = findAction(session, input.callId)
   const userText = reviewInput(session, input, preset, action, language)
-  const result = await reviewOnce(ctx, route, reviewSystem(policy, language), userText, input.requestSignal)
+  const result = await reviewOnce(ctx, route, reviewSystem(policy, language), userText, input.requestSignal, timeoutMs)
   return { ...result, preview: previewOf(action) }
 }

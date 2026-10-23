@@ -37,6 +37,7 @@ import type {} from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-llm'
 import type {} from '@deepseek-ai/dsh-settings'
 import type { InflightReviews } from './routes.ts'
+import type { Config } from './config.ts'
 import { ROUTE_BASE } from './contract.ts'
 import { handleAction, handleCatalog, handleTest, makeReviewHandler } from './routes.ts'
 
@@ -85,8 +86,9 @@ function fetchRoutesOf(ctx: Context): FetchRouteRegistry | undefined {
 /**
  * Install the Fetch routes.
  * @param ctx - Host context carrying the session and model services.
+ * @param config
  */
-export function apply(ctx: Context): void {
+export function apply(ctx: Context, config: Config): void {
   // The panel ships its own settings page; keeping the automatic page off means
   // a client that renders generated forms shows one page, not two.
   ctx.inject(['settings'], (scope) => {
@@ -109,7 +111,7 @@ export function apply(ctx: Context): void {
       path: `${ROUTE_BASE}/review`,
       methods: ['POST'],
       requestBody: 'buffered',
-      fetch: makeReviewHandler(ctx, inflight),
+      fetch: makeReviewHandler(ctx, inflight, config.reviewTimeoutMs),
     })
     routes.fetch.register({
       path: `${ROUTE_BASE}/catalog`,
@@ -121,7 +123,7 @@ export function apply(ctx: Context): void {
       path: `${ROUTE_BASE}/test`,
       methods: ['POST'],
       requestBody: 'buffered',
-      fetch: request => handleTest(ctx, request),
+      fetch: request => handleTest(ctx, request, config.reviewTimeoutMs),
     })
   })
   ctx.effect(() => () => {

@@ -4,3 +4,9 @@
 - insert:
     - id: dsh-anti-blind-approval
       name: 'dsh-anti-blind-approval'
+      config:
+        enabled: true
+        model: ''
+        delaySeconds: 3
+        prompt: ''
+        reviewTimeoutMs: 90000
