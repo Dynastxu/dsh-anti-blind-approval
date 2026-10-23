@@ -34,7 +34,6 @@ test/                       测试
 tsconfig.json               Node 编译面（ES2024，无 DOM）
 tsconfig.client.json        浏览器编译面（ES2024，React JSX）
 tsdown.config.ts            构建配置：src/index.ts → lib/index.js，src/client/ → lib/client.js
-cordis.dev.yml              --patch 开发覆盖层（绝对路径，本机专用）
 cordis.patch.yml            profile patch 层（包名引用）
 package.json                包清单 + dsh 声明
 README.md                   完整文档
