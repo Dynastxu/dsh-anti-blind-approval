@@ -31,7 +31,7 @@
 
 ## 源码与构建
 
-插件用 TypeScript 编写，`lib/` 是构建产物——安装前必须先构建，否则 profile 里加载的仍是旧的 `lib/`。
+插件用 TypeScript 编写，`lib/` 是构建产物，并随仓库一起提交：从 GitHub 安装时只是取源码包，构建产物必须在仓库里。改了 `src/` 之后必须重新构建并提交 `lib/`，否则安装方加载的仍是旧代码。
 
 ```
 src/
@@ -62,7 +62,7 @@ pnpm run build:repo        # tsdown：src/index.ts → lib/index.js，src/client
 pnpm test                  # 三个 node 测试：路由、浏览器半、真实 Cordis 组合
 ```
 
-插件单独安装了自己的依赖时（例如把它移出本仓库后 `pnpm install`），改用标准脚本 `pnpm run typecheck` / `pnpm run build`。`prepare` 也是 `tsdown`，因此从 git 安装时如果被授权执行构建，会得到同样的产物。
+插件单独安装了自己的依赖时（例如把它移出本仓库后 `pnpm install`），改用标准脚本 `pnpm run typecheck` / `pnpm run build`。这里刻意不设 `prepare`：pnpm 会为 git 依赖执行 `prepare`，而它默认拒绝执行未列入 `allowBuilds` 的依赖脚本，安装会直接失败（`ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`）；产物已经提交，安装方不需要现场构建。
 
 ### 两个编译面
 
@@ -107,6 +107,14 @@ pnpm dsh --profile web
 ```
 
 改动源码后：`pnpm run build:repo`，再刷新 Web 页面（正在运行的 Host 不会重新读 `lib/index.js`，宿主变更需重启）。
+
+从 GitHub 直接安装同样不需要改 `allowBuilds`：仓库里带着 `lib/`，而且没有 `prepare`/`install`/`postinstall` 脚本，pnpm 不会要求授权执行任何依赖脚本。spec 里带 commit 才能复现同一次安装：
+
+```sh
+pnpm dsh plugin --profile desktop add github:Dynastxu/dsh-anti-blind-approval#dc2924c
+```
+
+改动 `src/` 之后要重新提交 `lib/` 再推送，否则安装方拿到的是旧产物。
 
 卸载：
 

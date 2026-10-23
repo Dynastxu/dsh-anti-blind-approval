@@ -21,7 +21,6 @@
   },
   "scripts": {
     "build": "tsdown",
-    "prepare": "tsdown",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.client.json",
     "build:repo": "node ../node_modules/tsdown/dist/run.mjs",
     "typecheck:repo": "node ../node_modules/typescript/bin/tsc -p tsconfig.json && node ../node_modules/typescript/bin/tsc -p tsconfig.client.json",
