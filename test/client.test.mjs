@@ -163,38 +163,6 @@ function makeCtx(form) {
 }
 
 // ---------------------------------------------------------------------------
-// Legacy adoption: a section written by the localStorage version moves into
-// the profile's form once it is writable, then the old key goes away.
-storage.set('dsh-anti-blind-approval:v1', JSON.stringify({
-  enabled: false, model: 'legacy::m', delaySeconds: 5, prompt: 'legacy policy',
-}))
-const legacyForm = makeConfigForm()
-const legacy = makeCtx(legacyForm.form)
-const legacyModule = captured.factory(requireStub)
-legacyModule.apply(legacy.ctx)
-await tick()
-if (legacyModule.inject.includes('configForms') === false) throw new Error('configForms must be a required client service')
-if (legacy.namespace() !== 'dsh-anti-blind-approval') throw new Error('form must be read by the profile entry id')
-const legacyWrites = legacyForm.writes.map(([field]) => field).join(',')
-if (legacyWrites !== 'enabled,model,delaySeconds,prompt') throw new Error('legacy fields were not adopted: ' + legacyWrites)
-if (legacyForm.state.value.enabled !== false || legacyForm.state.value.prompt !== 'legacy policy') {
-  throw new Error('adopted values were not written')
-}
-if (storage.has('dsh-anti-blind-approval:v1')) throw new Error('legacy key must be removed after adoption')
-console.log('legacy adoption ok')
-
-// A composition that serves no writable form keeps the legacy section for a load that can.
-storage.set('dsh-anti-blind-approval:v1', JSON.stringify({ enabled: false }))
-const unavailableForm = makeConfigForm({ status: 'unavailable', writable: false })
-const unavailable = makeCtx(unavailableForm.form)
-captured.factory(requireStub).apply(unavailable.ctx)
-await tick()
-if (unavailableForm.writes.length !== 0) throw new Error('an unavailable form must not be written')
-if (!storage.has('dsh-anti-blind-approval:v1')) throw new Error('an unavailable form must keep the legacy key')
-storage.delete('dsh-anti-blind-approval:v1')
-console.log('legacy retention ok')
-
-// ---------------------------------------------------------------------------
 // Main composition: a writable, ready form.
 const config = makeConfigForm()
 const main = makeCtx(config.form)

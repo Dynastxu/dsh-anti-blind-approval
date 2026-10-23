@@ -9,8 +9,7 @@
  *      unsafe verdict. The human still makes the final decision.
  *   2. `settings.section` page: master switch, reviewer model, cool-down, and
  *      the custom policy. Values live in the active profile's plugin
- *      configuration, read and written through `ctx.configForms`; a one-time
- *      migration adopts preferences earlier versions kept in `localStorage`.
+ *      configuration, read and written through `ctx.configForms`.
  *
  * Loaded through the shell's module table: `react`, `react/jsx-runtime`, and
  * the UI primitives are module-table entries, so this bundle carries no copy.
@@ -31,7 +30,7 @@ import type { PendingApproval } from '@deepseek-ai/dsh-client-ui-approval/client
 import { ApprovalPanel, type CachedVerdict, type ReviewCache } from './ApprovalPanel.tsx'
 import { SettingsSection } from './SettingsSection.tsx'
 import { NS, en, zh } from './locales.ts'
-import { SETTINGS_NAMESPACE, SettingsHandle, adoptLegacySettings, type ReviewConfigSection } from './settings.ts'
+import { SETTINGS_NAMESPACE, SettingsHandle, type ReviewConfigSection } from './settings.ts'
 import { CSS, STYLE_MARKER } from './styles.ts'
 
 /** Required services: slot registry, dictionaries, and the settings form service. */
@@ -76,7 +75,6 @@ export function apply(ctx: ClientContext): void {
   const t = ctx.locale.bind(NS)
   const reviews = createReviewCache()
   const settings = new SettingsHandle(ctx.configForms.get<ReviewConfigSection>(SETTINGS_NAMESPACE))
-  ctx.effect(() => adoptLegacySettings(settings), 'anti-blind-approval: legacy settings migration')
 
   /**
    * The language the user reads this UI in. The reviewer writes its

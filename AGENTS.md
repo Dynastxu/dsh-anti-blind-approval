@@ -19,7 +19,7 @@ src/                        TypeScript sources
     index.ts                apply：样式、词典、configForms 句柄、两个 slot 注册
     ApprovalPanel.tsx       审批卡（conversation.composer，priority 0）
     SettingsSection.tsx     设置页（settings.section），读写 profile 配置
-    settings.ts             configForms 句柄 + 旧 localStorage 的一次性迁移
+    settings.ts             configForms 句柄
     locales.ts              zh / en 词典 + 错误码映射
     http.ts                 /api 请求与 HttpError
     styles.ts               注入到 <style> 的样式表
