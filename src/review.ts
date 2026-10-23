@@ -15,8 +15,8 @@ import type { Session } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-llm'
 import type { ReviewErrorCode, ReviewRequestBase, Verdict } from './types.ts'
 import {
-  DEFAULT_PROMPT, MAX_PREVIEW_CHARS, MAX_PROMPT_CHARS, MAX_VERDICT_REASON_CHARS,
-  normalizeLanguage, reviewSystem,
+  DEFAULT_PROMPT, DEFAULT_REVIEW_TIMEOUT_MS, MAX_PREVIEW_CHARS, MAX_PROMPT_CHARS,
+  MAX_VERDICT_REASON_CHARS, normalizeLanguage, reviewSystem,
 } from './prompt.ts'
 import { clip, isRecord } from './util.ts'
 
@@ -313,6 +313,7 @@ async function callModel(
  * @param system - policy plus the fixed output contract.
  * @param userText - JSON facts of the pending approval.
  * @param requestSignal - cancellation of the originating HTTP request.
+ * @param timeoutMs
  * @returns the verdict with the answering route and elapsed time.
  * @throws {ReviewFailure} with the localized failure code.
  */
@@ -324,10 +325,11 @@ export async function reviewOnce(
   requestSignal: AbortSignal | undefined,
   timeoutMs: number,
 ): Promise<ReviewOutcome> {
+  const effectiveTimeout = Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : DEFAULT_REVIEW_TIMEOUT_MS
   const controller = new AbortController()
   const timer = setTimeout(() => {
     controller.abort(new ReviewFailure('TIMEOUT'))
-  }, timeoutMs)
+  }, effectiveTimeout)
   const onAbort = (): void => { controller.abort(requestSignal?.reason) }
   requestSignal?.addEventListener('abort', onAbort, { once: true })
   const started = Date.now()
@@ -362,6 +364,7 @@ export interface RunReviewOptions extends ReviewRequestBase {
  * @param session - session whose approval is pending.
  * @param input - request facts from the panel.
  * @param preset - effective permission preset.
+ * @param timeoutMs
  * @returns the verdict, the answering route, the timing, and the preview.
  * @throws {ReviewFailure} with `NO_MODEL` or any review failure code.
  */
