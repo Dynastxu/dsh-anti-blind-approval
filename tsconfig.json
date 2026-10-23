@@ -24,16 +24,7 @@
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "paths": {
-      "@deepseek-ai/cordis": ["../vendor/cordis/lib/types/index.d.ts"],
-      "@deepseek-ai/schemastery": ["../vendor/schemastery/lib/types/index.d.ts"],
-      "@deepseek-ai/dsh-brand": ["../packages/util/brand/lib/types/index.d.ts"],
-      "@deepseek-ai/dsh-session": ["../packages/core/session/lib/types/index.d.ts"],
-      "@deepseek-ai/dsh-session/types": ["../packages/core/session/lib/types/types.d.ts"],
-      "@deepseek-ai/dsh-llm": ["../packages/llm/llm/lib/types/index.d.ts"],
-      "@deepseek-ai/dsh-settings": ["../packages/settings/settings/lib/types/index.d.ts"]
-    }
+    "noEmit": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/client/**"]
