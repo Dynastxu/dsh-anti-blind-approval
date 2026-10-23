@@ -62,10 +62,6 @@ These fields are `.volatile()` fields of the host-side plugin `Config`, projecte
     reviewTimeoutMs: 10000                      # 10-second timeout
 ```
 
-Older versions stored settings in browser `localStorage` (key `dsh-anti-blind-approval:v1`). On first load, the new version performs a **one-time migration**: it writes only fields not already overridden by the profile, and deletes the old key only after all writes succeed; values in `cordis.yml` take precedence and will not be overwritten by old values.
-
-> When starting with the `--patch cordis.dev.yml` overlay, this entry does not belong to the profile's own config layer, so config-editor will refuse writes (the settings page shows "Save failed"); reads still show the effective values from config. To change settings during development, install the plugin into the profile (see below) before opening the settings page.
-
 ## Source and Build
 
 The plugin is written in TypeScript. `lib/` contains build artifacts and is committed with the repository: installing from GitHub just fetches the source package, so build artifacts must be in the repository. After changing `src/`, you must rebuild (`pnpm run build`) and commit `lib/`, otherwise consumers still load the old code.

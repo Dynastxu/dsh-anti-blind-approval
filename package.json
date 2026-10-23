@@ -1,12 +1,12 @@
 {
   "name": "dsh-anti-blind-approval",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "icon": "icon.svg",
   "private": false,
   "description": "反盲批 / Anti Blind Approval — DeepSeek Harness approval guard: review workspace-write escalation requests with the session model, then gate the Allow button on a strict JSON verdict.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Dynastxu/dsh-anti-blind-approval.git"
+    "url": "git+https://github.com/Dynastxu/dsh-anti-blind-approval.git"
   },
   "homepage": "https://github.com/Dynastxu/dsh-anti-blind-approval#readme",
   "bugs": "https://github.com/Dynastxu/dsh-anti-blind-approval/issues",

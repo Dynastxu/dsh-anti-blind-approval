@@ -62,10 +62,6 @@ DeepSeek Harness 插件：会话处于「工作区内修改」（workspace-write
     reviewTimeoutMs: 10000                      # 10 秒超时
 ```
 
-旧版本把设置存在浏览器 `localStorage`（key `dsh-anti-blind-approval:v1`）。新版本首次加载时会**一次性迁移**：只写入 profile 尚未覆盖的字段，全部写入成功后才删除旧 key；写在 `cordis.yml` 里的值优先，不会被旧值覆盖。
-
-> 以 `--patch cordis.dev.yml` 覆盖层启动时，该条目不属于 profile 自己的配置层，config-editor 会拒绝写入（设置页提示「保存失败」）；读取仍显示配置里的有效值。要在开发期改设置，把插件装进 profile（见下文）后再打开设置页。
-
 ## 源码与构建
 
 插件用 TypeScript 编写，`lib/` 是构建产物，并随仓库一起提交：从 GitHub 安装时只是取源码包，构建产物必须在仓库里。改了 `src/` 之后必须重新构建（`pnpm run build`）并提交 `lib/`，否则安装方加载的仍是旧代码。
