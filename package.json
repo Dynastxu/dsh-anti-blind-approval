@@ -1,6 +1,6 @@
 {
   "name": "@dynastxu/dsh-anti-blind-approval",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "icon": "icon.svg",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
