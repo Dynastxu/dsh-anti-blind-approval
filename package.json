@@ -42,7 +42,8 @@
     "typecheck:repo": "node ../node_modules/typescript/bin/tsc -p tsconfig.json && node ../node_modules/typescript/bin/tsc -p tsconfig.client.json",
     "test": "node test/host.test.mjs && node test/client.test.mjs && node test/composition.test.mjs",
     "prepublishOnly": "pnpm run build",
-    "ci": "pnpm run typecheck && pnpm run test && pnpm run build"
+    "ci": "pnpm run typecheck && pnpm run test && pnpm run build",
+    "publish:github": "pnpm publish --registry https://npm.pkg.github.com"
   },
   "keywords": [
     "deepseek-harness",
