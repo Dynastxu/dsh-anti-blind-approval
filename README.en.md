@@ -159,10 +159,6 @@ node test/composition.test.mjs   # Real Cordis Context: service dependencies det
 
 `composition.test.mjs` loads the runtime from `vendor/cordis` in the repo, so it validates the real `inject` gating and activation timing, not a hand-built fake ctx. Route disposal is handled by the Host Connection service in the caller fiber's effect (the disposer returned by `register()` belongs to that fiber); the plugin only submits routes.
 
-Verified in a real web profile with isolated `DSH_HOME` (JS version before the refactor): the plugin can be installed, enters the `--dump-config` config layer, the client bundle appears in the boot graph and can be loaded via `/plugins/...`, and `/catalog` and `/test` are reachable after browser Cookie authentication.
-
-**Not verified**: this refactor has not been installed and run again in a real profile (the local sandbox forbids pnpm store locks and tsx subprocesses, so `--dump-config` cannot run). Writing settings to the profile patch and the final interaction in the browser still need confirmation on first use; first click "Test review" on the settings page, then confirm that after saving, `cordis.patch.yml` contains this plugin's `config` section.
-
 ## Known Limitations
 
 - Replacing `conversation.composer` depends on DSH's slot chain contract (ascending priority, first non-empty select wins). If a DSH update changes that contract, turn off "Enable AI review" to immediately fall back to the native panel.

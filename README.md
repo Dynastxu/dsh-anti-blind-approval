@@ -159,10 +159,6 @@ node test/composition.test.mjs   # 真实 Cordis Context：服务依赖决定激
 
 `composition.test.mjs` 加载的是仓库内 `vendor/cordis` 的运行时，因此校验的是真实的 `inject` 门控与激活时机，而不是手搭的假 ctx。路由的销毁由 Host Connection 服务在调用方 fiber 的 effect 里负责（`register()` 返回的 disposer 属于该 fiber），插件只负责提交路由。
 
-已在隔离 `DSH_HOME` 的真实 web profile 中验证过（改造前的 JS 版）：插件可安装、进入 `--dump-config` 配置层、客户端 bundle 出现在 boot graph 并可经 `/plugins/...` 加载、`/catalog` 与 `/test` 在浏览器 Cookie 认证后可达。
-
-**未验证**：本次改造没有再次在真实 profile 里安装运行（本机沙箱禁止 pnpm store 锁与 tsx 子进程，`--dump-config` 跑不起来），设置写入 profile patch 与浏览器里的最终交互仍需首次使用确认；先点一次设置页的「测试审核」，再确认保存后 `cordis.patch.yml` 出现本插件的 `config` 段。
-
 ## 已知限制
 
 - 替换 `conversation.composer` 依赖 DSH 的 slot 链契约（priority 升序、首个非空 select 胜出）。DSH 改版若调整该契约，关掉「启用 AI 审核」即可立即回退原生面板。
