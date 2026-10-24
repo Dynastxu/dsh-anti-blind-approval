@@ -6,7 +6,7 @@ const routes = new Map()
 const calls = []
 const configured = []
 
-function makeCtx(preset, toolArguments) {
+function makeCtx(preset, toolArguments, { hang = false } = {}) {
   const session = {
     id: 's1',
     header: { cwd: 'C:/work' },
@@ -22,6 +22,15 @@ function makeCtx(preset, toolArguments) {
       listModels: async () => [{ id: 'fake-1', name: 'Fake One' }],
       stream: (options) => {
         calls.push(options)
+        if (hang) {
+          // The real provider stream watches the signal; a stalled review only
+          // settles because the timeout aborts it.
+          return (async function* () {
+            await new Promise((_, reject) => {
+              options.signal.addEventListener('abort', () => reject(new Error('stream aborted')), { once: true })
+            })
+          })()
+        }
         const text = globalThis.__NEXT_TEXT__ ?? '{"safe":true,"reason":"常规项目操作"}'
         return (async function* () {
           yield { type: 'text-delta', text }
@@ -39,6 +48,14 @@ function makeCtx(preset, toolArguments) {
       settings: { configure: (policy, owner) => { configured.push(policy); return () => {} } },
     }),
   }
+}
+
+/**
+ * A resolved plugin Config: every field is a volatile handle, as the Host hands
+ * it to `apply`. Tests replace a handle when they need a non-default value.
+ */
+function makeConfig() {
+  return new plugin.Config()
 }
 
 async function call(path, body) {
@@ -59,10 +76,13 @@ function assert(cond, message) {
 }
 
 const ctx = makeCtx('workspace-write')
-apply(ctx)
+apply(ctx, makeConfig())
 assert(typeof plugin.Config === 'function', 'Config schema is exported')
 const defaults = new plugin.Config()
-assert(defaults.enabled.get() === true && defaults.delaySeconds.get() === 3, 'Config defaults are live references')
+assert(
+  defaults.enabled.get() === true && defaults.delaySeconds.get() === 3 && defaults.reviewTimeoutMs.get() === 10000,
+  'Config defaults are live references',
+)
 assert(configured.length === 1 && configured[0].auto === false, 'the plugin opts out of the automatic settings page')
 assert(routes.has('/api/anti-blind-approval/action'), 'action route registered')
 assert(routes.has('/api/anti-blind-approval/review'), 'review route registered')
@@ -122,7 +142,7 @@ assert(calls.at(-1).messages[0].content[0].text.includes('"userLanguage": "en"')
 
 const huge = makeCtx('workspace-write', JSON.stringify({ path: 'big.txt', content: 'x'.repeat(200000) }))
 routes.clear()
-apply(huge)
+apply(huge, makeConfig())
 globalThis.__NEXT_TEXT__ = '{"safe":true,"reason":"ok"}'
 const clipped = await call('/api/anti-blind-approval/review', { sessionId: 's1', callId: 'c1', toolName: 'write', reason: 'r' })
 assert(clipped.value.safe === true, 'huge-argument review succeeds')
@@ -130,9 +150,24 @@ const sent = calls.at(-1).messages[0].content[0].text
 assert(sent.length < 24000, 'review input is clipped')
 assert(sent.includes('x'.repeat(100)), 'review input keeps a content prefix')
 
+// The configured timeout is a live handle: it must be honored, and read per
+// request rather than once when the routes were registered.
+let timeoutReads = 0
+const timeoutConfig = makeConfig()
+timeoutConfig.reviewTimeoutMs = { get: () => { timeoutReads += 1; return 60 } }
+routes.clear()
+apply(makeCtx('workspace-write', undefined, { hang: true }), timeoutConfig)
+const stalled = await call('/api/anti-blind-approval/review', { sessionId: 's1', callId: 'c1', toolName: 'bash', reason: 'r' })
+assert(stalled.value.errorCode === 'TIMEOUT', 'configured review timeout aborts a stalled review')
+routes.clear()
+apply(makeCtx('workspace-write'), timeoutConfig)
+const afterTimeout = await call('/api/anti-blind-approval/review', { sessionId: 's1', callId: 'c1', toolName: 'bash', reason: 'r' })
+assert(afterTimeout.value.safe === true, 'a review still runs with the configured timeout')
+assert(timeoutReads === 2, 'the timeout is read from the live config per request')
+
 const other = makeCtx('danger-full-access')
 routes.clear()
-apply(other)
+apply(other, makeConfig())
 const skipped = await call('/api/anti-blind-approval/action', { sessionId: 's1', callId: 'c1' })
 assert(skipped.value.active === false && skipped.value.preset === 'danger-full-access', 'non workspace-write skipped')
 

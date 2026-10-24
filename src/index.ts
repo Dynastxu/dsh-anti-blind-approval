@@ -86,7 +86,7 @@ function fetchRoutesOf(ctx: Context): FetchRouteRegistry | undefined {
 /**
  * Install the Fetch routes.
  * @param ctx - Host context carrying the session and model services.
- * @param config
+ * @param config - resolved plugin configuration; every field is a live handle.
  */
 export function apply(ctx: Context, config: Config): void {
   // The panel ships its own settings page; keeping the automatic page off means
@@ -97,6 +97,9 @@ export function apply(ctx: Context, config: Config): void {
       'dsh-anti-blind-approval: settings page policy',
     )
   })
+  // Read the timeout per request, not once at registration: the field is
+  // volatile, so a settings edit applies to the next review without a reload.
+  const reviewTimeoutMs = (): number => config.reviewTimeoutMs.get()
   const inflight: InflightReviews = new Map()
   ctx.inject(['connection'], (scope) => {
     const routes = fetchRoutesOf(scope)
@@ -111,7 +114,7 @@ export function apply(ctx: Context, config: Config): void {
       path: `${ROUTE_BASE}/review`,
       methods: ['POST'],
       requestBody: 'buffered',
-      fetch: makeReviewHandler(ctx, inflight, config.reviewTimeoutMs),
+      fetch: makeReviewHandler(ctx, inflight, reviewTimeoutMs),
     })
     routes.fetch.register({
       path: `${ROUTE_BASE}/catalog`,
@@ -123,7 +126,7 @@ export function apply(ctx: Context, config: Config): void {
       path: `${ROUTE_BASE}/test`,
       methods: ['POST'],
       requestBody: 'buffered',
-      fetch: request => handleTest(ctx, request, config.reviewTimeoutMs),
+      fetch: request => handleTest(ctx, request, reviewTimeoutMs),
     })
   })
   ctx.effect(() => () => {

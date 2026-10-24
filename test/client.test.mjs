@@ -169,7 +169,7 @@ const main = makeCtx(config.form)
 const mod = captured.factory(requireStub)
 mod.apply(main.ctx)
 
-if (styleTags.length !== 3) throw new Error('stylesheet was not injected once per apply')
+if (styleTags.length !== 1) throw new Error('stylesheet was not injected once')
 console.log('exports:', Object.keys(mod).join(','))
 console.log('client inject:', JSON.stringify(mod.inject))
 console.log('registered:', main.registered.map((r) => r.opts.name + '#' + (r.opts.id || '')).join(' | '))

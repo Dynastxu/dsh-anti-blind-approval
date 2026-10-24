@@ -151,9 +151,10 @@ export async function handleAction(ctx: Context, request: Request): Promise<Resp
  * one model call: a remount must not pay twice.
  * @param ctx - Host context.
  * @param inflight - reviews currently running, keyed by their facts.
+ * @param timeoutMs - reads the current configured review timeout, per request.
  * @returns the route handler.
  */
-export function makeReviewHandler(ctx: Context, inflight: InflightReviews, timeoutMs: number): (request: Request) => Promise<Response> {
+export function makeReviewHandler(ctx: Context, inflight: InflightReviews, timeoutMs: () => number): (request: Request) => Promise<Response> {
   return async function handleReview(request: Request): Promise<Response> {
     const input = await readBody(request)
     if (input === undefined) return json({ errorCode: 'BAD_REQUEST' } satisfies ReviewResponse, 400)
@@ -172,7 +173,7 @@ export function makeReviewHandler(ctx: Context, inflight: InflightReviews, timeo
         session,
         { ...facts, requestSignal: request.signal },
         preset,
-        timeoutMs,
+        timeoutMs(),
       ).then(
         value => ({ ok: true, value }),
         (error: unknown) => ({ ok: false, error }),
@@ -225,10 +226,10 @@ export async function handleCatalog(ctx: Context): Promise<Response> {
  * credentials from the settings page.
  * @param ctx - Host context.
  * @param request - incoming request carrying the optional overrides.
- * @param timeoutMs - maximum milliseconds one review may take.
+ * @param timeoutMs - reads the current configured review timeout, per request.
  * @returns the verdict, or the failure code.
  */
-export async function handleTest(ctx: Context, request: Request, timeoutMs: number): Promise<Response> {
+export async function handleTest(ctx: Context, request: Request, timeoutMs: () => number): Promise<Response> {
   const body = await readBody(request)
   const input: TestReviewRequest = stringFields(body ?? {}, TEST_FIELDS)
   const route = await resolveRoute(ctx, undefined, input.model)
@@ -253,7 +254,7 @@ export async function handleTest(ctx: Context, request: Request, timeoutMs: numb
     },
   }, null, 2)
   try {
-    const result = await reviewOnce(ctx, route, reviewSystem(policy, language), facts, request.signal, timeoutMs)
+    const result = await reviewOnce(ctx, route, reviewSystem(policy, language), facts, request.signal, timeoutMs())
     return json({
       ok: true,
       safe: result.safe,
