@@ -72,7 +72,7 @@ const requireStub = (id) => {
 
 await import('../lib/client.js')
 if (!captured) throw new Error('module was not registered')
-if (captured.id !== 'dsh-anti-blind-approval') throw new Error('loader id must be the package name')
+if (captured.id !== '@dynastxu/dsh-anti-blind-approval') throw new Error('loader id must be the package name')
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 20))
 

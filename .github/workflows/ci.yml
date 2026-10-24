@@ -25,14 +25,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Type Check
-        run: pnpm run typecheck
-
-      - name: Test
-        run: pnpm run test
-
-      - name: Build
-        run: pnpm run build
+      - name: CI
+        run: pnpm run ci
 
       - name: Check lib/ is up-to-date
         run: git diff --exit-code -- 'lib/' ':(exclude)lib/*.map'

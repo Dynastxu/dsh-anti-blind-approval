@@ -1,6 +1,6 @@
 {
   "name": "@dynastxu/dsh-anti-blind-approval",
-  "version": "0.3.4",
+  "version": "0.4.0",
   "icon": "icon.svg",
   "publishConfig": {
     "access": "public"
@@ -41,7 +41,8 @@
     "build:repo": "node ../node_modules/tsdown/dist/run.mjs",
     "typecheck:repo": "node ../node_modules/typescript/bin/tsc -p tsconfig.json && node ../node_modules/typescript/bin/tsc -p tsconfig.client.json",
     "test": "node test/host.test.mjs && node test/client.test.mjs && node test/composition.test.mjs",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run build",
+    "ci": "pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "keywords": [
     "deepseek-harness",
@@ -70,24 +71,24 @@
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.4",
-    "@deepseek-ai/dsh-brand": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-locale": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-approval": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-conversation": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-primitives": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-renderer": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-session": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-settings": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-slots": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-llm": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-session": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-settings": "^0.2.0-rc.2",
+    "@deepseek-ai/dsh-brand": "^0.2.1-rc.3",
+    "@deepseek-ai/dsh-client-locale": "^0.2.1-rc.3",
+    "@deepseek-ai/dsh-client-ui-approval": "^0.2.1-rc.3",
+    "@deepseek-ai/dsh-client-ui-conversation": "^0.2.1-rc.3",
+    "@deepseek-ai/dsh-client-ui-primitives": "^0.2.1-rc.3",
+    "@deepseek-ai/dsh-client-ui-renderer": "^0.2.1-rc.3",
+    "@deepseek-ai/dsh-client-ui-session": "^0.2.1-rc.3",
+    "@deepseek-ai/dsh-client-ui-settings": "^0.2.1-rc.3",
+    "@deepseek-ai/dsh-client-ui-slots": "^0.2.1-rc.3",
+    "@deepseek-ai/dsh-llm": "^0.2.1-rc.3",
+    "@deepseek-ai/dsh-session": "^0.2.1-rc.3",
+    "@deepseek-ai/dsh-settings": "^0.2.1-rc.3",
     "@types/node": "^24.19.2",
-    "@types/react": "^18.3.1",
-    "@types/react-dom": "^18.3.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "tsdown": "^0.22.2",
-    "typescript": "^6.0.3"
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tsdown": "^0.23.1",
+    "typescript": "^7.0.2"
   }
 }
