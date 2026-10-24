@@ -3,7 +3,6 @@
   "version": "0.3.4",
   "icon": "icon.svg",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
   "description": "反盲批 / Anti Blind Approval — DeepSeek Harness approval guard: review workspace-write escalation requests with the session model, then gate the Allow button on a strict JSON verdict.",
