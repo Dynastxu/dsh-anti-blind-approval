@@ -26,19 +26,23 @@
   <a href="README.en.md">English</a>
 </p>
 
-DeepSeek Harness 插件：会话处于「工作区内修改」（workspace-write）时，把提权申请同时交给模型审核，只返回 `{safe, reason}`；审核期间「允许」按钮显示加载环且不可点，判为不安全时再锁定 N 秒（默认 3 秒）。**最终决定权仍在人，不会自动放行。**
+## 简介
 
-界面显示名：**反盲批 / Anti Blind Approval**。包标识与仓库/文件夹同名：`dsh-anti-blind-approval`，安装、卸载和命令里用这个包名。
+DeepSeek Harness 插件：防止用户盲目地批准模型的提权请求
 
-## 界面示例
-### 允许
+仅在会话处于「工作区内修改」（workspace-write）时生效。仅提出建议，**不自动放行**。
+
+## 安装
+
+在安装页面中输入 `@dynastxu/dsh-anti-blind-approval` 或 `https://github.com/Dynastxu/dsh-anti-blind-approval` 即可安装。
+
+## 界面预览
+### 审核通过
 ![allow.png](docs/imgs/allow.png)
-### 拒绝
+### 审核未通过
 ![deny.png](docs/imgs/deny.png)
 
 ## 设置
-
-**设置 → 反盲批**（独立设置页，不依赖插件自动配置表单）：
 
 | 设置项 | 默认 | 说明 |
 |---|---|---|
@@ -101,25 +105,6 @@ package.json                包清单 + dsh 声明
 README.md                   完整文档
 ```
 
-在本仓库里开发时，用仓库根目录的工具链：
-
-```sh
-cd dsh-anti-blind-approval
-pnpm run typecheck         
-pnpm run build             
-pnpm test                  
-```
-
-宿主半依赖 `@deepseek-ai/schemastery`（`Config` 是它的 schema），已写进 `dependencies`；浏览器半没有新增运行时依赖。装进 profile 时由 pnpm 按依赖安装；在源码 checkout 里直接跑 `--patch` 时，插件目录要先 `pnpm install` 一次，否则 `lib/index.js` 解析不到这个 import（构建也需要它）。
-
-插件单独安装了自己的依赖时（例如把它移出本仓库后 `pnpm install`），改用标准脚本 `pnpm run typecheck` / `pnpm run build`。这里刻意不设 `prepare`：pnpm 会为 git 依赖执行 `prepare`，而它默认拒绝执行未列入 `allowBuilds` 的依赖脚本，安装会直接失败（`ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`）；产物已经提交，安装方不需要现场构建。
-
-### 两个编译面
-
-`tsconfig.json`（Node，无 DOM）和 `tsconfig.client.json`（浏览器，React JSX）分开，避免任一面带进另一面的全局类型。两面的 `paths` 只把 `@deepseek-ai/*` 指到各包**已发布的声明**（`lib/types`），因此类型检查针对的就是运行时实际安装的 API，与仓库内部的源码别名无关。
-
-`lib/client.js` 由 `tsdown.config.ts` 产出为客户端模块表要求的闭包工厂格式（`window.__ModuleLoader__.load({ id, factory })`）：`react`、`react/jsx-runtime`、`@deepseek-ai/dsh-client-ui-primitives` 保持为模块表请求，其余全部内联。宿主半只有一个运行时 import（`@deepseek-ai/schemastery`），路由与审核代码仍然自包含。
-
 ## 行为与边界
 
 - **只接管 `workspace-write` 会话**。`read-only` / `danger-full-access` / `custom` 会话不受影响（宿主侧会再校验一次 preset）。
@@ -130,34 +115,6 @@ pnpm test
 - **审核调用不计入会话 token**：它是插件发起的附加模型调用，不会出现在会话日志/上下文里。
 - **同一审批结果会短缓存**：缓存挂在插件实例上（经注入面交给面板），重复挂载不会重复调用模型（最多缓存 64 条）。
 - **配置是 profile 级的**：设置页的写入落在当前 profile 的 `cordis.patch.yml`，由 config-editor 校验后热更新；同一 profile 的所有浏览器立即看到同一份值，手工编辑 `cordis.yml` 也等效。
-
-## 架构
-
-```
-lib/index.js    宿主半（ESM，仅 import @deepseek-ai/schemastery）
-  ├─ Config（.volatile()）                     settings 据此投影浏览器表单
-  ├─ POST /api/anti-blind-approval/action    preset 判定 + 待审操作预览（不调模型）
-  ├─ POST /api/anti-blind-approval/review    调 ctx.llm.stream，严格解析 {safe, reason}
-  ├─ GET  /api/anti-blind-approval/catalog   provider/model 列表 + 内置提示词
-  └─ POST /api/anti-blind-approval/test      合成样例的连通性测试
-lib/client.js   浏览器半（模块加载器格式，仅 require react / react-jsx-runtime / ui-primitives）
-  ├─ conversation.composer  priority 0 接管审批面板（原生面板是 priority 1）
-  └─ settings.section       「反盲批」设置页，读写 ctx.configForms
-```
-
-宿主路由通过 `ctx.connection.fetch.register()` 注册，走 DSH 已有的 `/api` 认证与 Host/Origin 防护，不另开端口；`connection` 缺失时插件照常加载、不注册路由，面板探测到 404 就回退原生面板。
-
-浏览器半依赖 ui-settings 提供的 `ctx.configForms`：`configForms` 缺失时客户端插件不激活，原生审批面板照常工作。宿主半另外可选注入 `settings`，用 `configure({ auto: false })` 声明自己提供设置页，避免客户端生成重复的自动表单。
-
-## 验证
-
-```sh
-node test/host.test.mjs          # 假 ctx + 假模型流：路由、preset、JSON 解析、错误码、裁剪、Config 默认值
-node test/client.test.mjs        # 假 loader/React/configForms：面板与设置页、请求体断言、配置写入、旧值迁移
-node test/composition.test.mjs   # 真实 Cordis Context：服务依赖决定激活、无 connection 时零路由、settings 策略
-```
-
-`composition.test.mjs` 加载的是仓库内 `vendor/cordis` 的运行时，因此校验的是真实的 `inject` 门控与激活时机，而不是手搭的假 ctx。路由的销毁由 Host Connection 服务在调用方 fiber 的 effect 里负责（`register()` 返回的 disposer 属于该 fiber），插件只负责提交路由。
 
 ## 已知限制
 
