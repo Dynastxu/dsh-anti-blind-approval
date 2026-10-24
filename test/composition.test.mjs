@@ -3,7 +3,7 @@
 //
 // Route disposal is owned by the Host Connection service, which registers each
 // route inside the caller fiber's effect; this plugin only hands it the route.
-import { Context } from '../../vendor/cordis/lib/index.js'
+import { Context } from '@deepseek-ai/cordis'
 import * as plugin from '../lib/index.js'
 
 /** The four routes one activated plugin contributes. */
